@@ -1,9 +1,11 @@
 use bevy::{
     asset::{AssetLoader, LoadedAsset},
+    ecs::system::EntityCommands,
     prelude::*,
     reflect::{erased_serde::__private::serde::Deserialize, TypeUuid},
     utils::HashMap,
 };
+use bevy_wasm_scripting::WasmScript;
 
 use crate::{
     delivery::{DeliveryAnchor, DeliveryDropoff, DeliverySource},
@@ -63,6 +65,7 @@ pub struct HarvestableType {
     pub sprite_index: usize,
     pub seed_sprite_index: Option<usize>,
     pub value: i32,
+    pub plant: bool,
 }
 
 #[derive(Default)]
@@ -93,8 +96,10 @@ impl FromWorld for HarvestableTypes {
         let harvestables = world.get_resource::<HarvestableAssets>().unwrap();
         let assets = world.get_resource::<Assets<HarvestableType>>().unwrap();
         let mut map = HashMap::new();
-        assets.get(&harvestables.red_berry).map(|harvestable| {
-            map.insert(harvestable.id, harvestable.clone());
+        harvestables.harvestables.iter().for_each(|harvestable| {
+            if let Some(harvestable) = assets.get(harvestable) {
+                map.insert(harvestable.id, harvestable.clone());
+            }
         });
         Self(map)
     }
@@ -124,6 +129,34 @@ pub struct HarvestSpotBundle {
     delivery_anchor: DeliveryAnchor,
 }
 
+pub fn spawn_harvest_spot<'a, 'b, 'c>(
+    commands: &'c mut Commands<'a, 'b>,
+    position: Vec2,
+    texture_atlas: Handle<TextureAtlas>,
+    script: Handle<WasmScript>,
+) -> EntityCommands<'a, 'b, 'c> {
+    commands.spawn(HarvestSpotBundle {
+        sprite: SpriteSheetBundle {
+            texture_atlas,
+            sprite: TextureAtlasSprite {
+                index: 0,
+                ..Default::default()
+            },
+            transform: Transform::from_translation(Vec3::new(position.x, position.y, 1.)),
+            ..Default::default()
+        },
+        harvest_spot: HarvestSpot {
+            harvestable_type: None,
+            harvestable_entity: None,
+            progress: 0.,
+            harvest_time: 0.,
+        },
+        delivery_anchor: DeliveryAnchor::new(0., -8., 16., 16 * 16),
+        delivery_source: DeliverySource::new(script.clone()),
+        delivery_location: DeliveryDropoff::new(script),
+    })
+}
+
 fn spawn_harvest_spots(
     mut commands: Commands,
     textures: Res<TextureAssets>,
@@ -131,30 +164,12 @@ fn spawn_harvest_spots(
 ) {
     for x in 0..3 {
         for y in 0..2 {
-            commands.spawn(HarvestSpotBundle {
-                sprite: SpriteSheetBundle {
-                    texture_atlas: textures.harvest_base.clone(),
-                    sprite: TextureAtlasSprite {
-                        index: 0,
-                        ..Default::default()
-                    },
-                    transform: Transform::from_translation(Vec3::new(
-                        x as f32 * 32.,
-                        y as f32 * 32.,
-                        1.,
-                    )),
-                    ..Default::default()
-                },
-                harvest_spot: HarvestSpot {
-                    harvestable_type: None,
-                    harvestable_entity: None,
-                    progress: 0.,
-                    harvest_time: 0.,
-                },
-                delivery_anchor: DeliveryAnchor::new(0., -8., 16., 16 * 16),
-                delivery_source: DeliverySource::new(scripts.field_spot.clone()),
-                delivery_location: DeliveryDropoff::new(scripts.field_spot.clone()),
-            });
+            spawn_harvest_spot(
+                &mut commands,
+                Vec2::new(x as f32 * 32., y as f32 * 32.),
+                textures.harvest_base.clone(),
+                scripts.field_spot.clone(),
+            );
         }
     }
 }
@@ -209,7 +224,7 @@ fn harvestable_growth_system(
                     sprite: SpriteSheetBundle {
                         texture_atlas: textures.harvestables.clone(),
                         sprite: TextureAtlasSprite {
-                            index: 0,
+                            index: spot.harvestable_type.unwrap().sprite_index,
                             ..Default::default()
                         },
                         transform: Transform::from_translation(Vec3::new(0., 0., 10.)),

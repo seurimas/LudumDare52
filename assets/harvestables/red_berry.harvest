@@ -5,4 +5,5 @@ HarvestableType(
     sprite_index: 0,
     seed_sprite_index: 1,
     value: 1,
+    plant: true,
 )

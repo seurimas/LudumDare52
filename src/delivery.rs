@@ -187,10 +187,12 @@ fn delivery_sourcing_system(
                             EntityId::from_entity(entity),
                         ) {
                             Ok(produced_entity) => {
-                                println!("Produced!");
-                                *script_env.resources.0 = DeliveryItem::FromSource {
-                                    delivered: produced_entity.to_entity(),
-                                    source: entity.clone(),
+                                if !produced_entity.is_missing() {
+                                    println!("Produced!");
+                                    *script_env.resources.0 = DeliveryItem::FromSource {
+                                        delivered: produced_entity.to_entity(),
+                                        source: entity.clone(),
+                                    }
                                 }
                             }
                             Err(err) => {
@@ -283,7 +285,7 @@ fn delivery_dropoff_system(
                                 *script_env.resources.0 = DeliveryItem::Nothing;
                             }
                             Err(err) => {
-                                error!("Error in produce: {:?}", err);
+                                error!("Error in receive: {:?}", err);
                             }
                         }
                         return;

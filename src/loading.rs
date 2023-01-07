@@ -48,12 +48,29 @@ pub struct DeliveryScripts {
     pub field_spot: Handle<WasmScript>,
     #[asset(path = "scripts/market.wasm")]
     pub market: Handle<WasmScript>,
+    #[asset(path = "scripts/recruitment.wasm")]
+    pub recruitment: Handle<WasmScript>,
+    #[asset(path = "scripts/practice_field.wasm")]
+    pub practice_field: Handle<WasmScript>,
+    #[asset(path = "scripts/archery_field.wasm")]
+    pub archery_field: Handle<WasmScript>,
+    #[asset(path = "scripts/child_spot.wasm")]
+    pub child_spot: Handle<WasmScript>,
 }
 
 #[derive(AssetCollection, Resource)]
 pub struct HarvestableAssets {
-    #[asset(path = "harvestables/red_berry.harvest")]
-    pub red_berry: Handle<HarvestableType>,
+    #[asset(
+        paths(
+            "harvestables/archer.harvest",
+            "harvestables/grapes.harvest",
+            "harvestables/recruit.harvest",
+            "harvestables/red_berry.harvest",
+            "harvestables/soldier.harvest",
+        ),
+        collection(typed)
+    )]
+    pub harvestables: Vec<Handle<HarvestableType>>,
 }
 
 #[derive(AssetCollection, Resource)]

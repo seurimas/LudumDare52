@@ -7,6 +7,7 @@ mod loading;
 mod market;
 mod menu;
 mod player;
+mod recruiting;
 
 use crate::actions::ActionsPlugin;
 use crate::audio::InternalAudioPlugin;
@@ -21,6 +22,7 @@ use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use delivery::DeliveryPlugin;
 use market::MarketPlugin;
+use recruiting::RecruitingPlugin;
 
 // This example game uses States to separate logic
 // See https://bevy-cheatbook.github.io/programming/states.html
@@ -47,6 +49,7 @@ impl Plugin for GamePlugin {
             .add_plugin(DeliveryPlugin)
             .add_plugin(MarketPlugin)
             .add_plugin(HarvestPlugin)
+            .add_plugin(RecruitingPlugin)
             .add_plugin(PlayerPlugin);
 
         #[cfg(debug_assertions)]

@@ -1,0 +1,8 @@
+#![enable(implicit_some)]
+HarvestableType(
+    id: 4,
+    base_harvest_time: 12.,
+    sprite_index: 6,
+    value: -1,
+    plant: false,
+)

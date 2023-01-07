@@ -14,20 +14,17 @@ pub unsafe extern "C" fn can_produce(me: EntityId) -> Bool {
 #[no_mangle]
 pub unsafe extern "C" fn produce(me: EntityId) -> EntityId {
     set_harvest_spot_harvestable(me, -1);
+    set_visibility(me, Bool::FALSE());
     get_harvest_spot_harvestable(me)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn can_receive(me: EntityId, delivery: EntityId) -> Bool {
-    get_harvestable_is_plant(delivery)
+    Bool::FALSE()
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn receive(me: EntityId, delivery: EntityId, from: EntityId) {
-    let harvestable_id = get_harvestable_id(delivery);
-    set_harvest_spot_harvestable(me, harvestable_id);
-    despawn_entity(delivery);
-}
+pub unsafe extern "C" fn receive(me: EntityId, delivery: EntityId, from: EntityId) {}
 
 #[no_mangle]
 pub unsafe extern "C" fn rejected(me: EntityId, delivery: EntityId) {
@@ -36,6 +33,7 @@ pub unsafe extern "C" fn rejected(me: EntityId, delivery: EntityId) {
         set_harvest_spot_harvestable(me, harvestable_id);
         set_harvest_spot_progress_perc(me, 1.);
         attach_child(me, delivery);
+        set_visibility(me, Bool::TRUE());
     }
     despawn_entity(delivery);
 }
