@@ -1,8 +1,9 @@
 #![enable(implicit_some)]
 HarvestableType(
     id: 4,
-    base_harvest_time: 12.,
+    base_harvest_time: 4.,
     sprite_index: 6,
     value: -1,
     plant: false,
+    troop_id: 0,
 )

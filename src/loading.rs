@@ -1,4 +1,5 @@
 use crate::{
+    battle::{TroopType, TroopTypes},
     harvest::{Harvestable, HarvestableType, HarvestableTypes},
     GameState,
 };
@@ -21,7 +22,9 @@ impl Plugin for LoadingPlugin {
                 .with_collection::<TextureAssets>()
                 .with_collection::<DeliveryScripts>()
                 .with_collection::<HarvestableAssets>()
+                .with_collection::<TroopAssets>()
                 .init_resource::<HarvestableTypes>()
+                .init_resource::<TroopTypes>()
                 .continue_to_state(GameState::Menu),
         );
     }
@@ -56,6 +59,8 @@ pub struct DeliveryScripts {
     pub archery_field: Handle<WasmScript>,
     #[asset(path = "scripts/child_spot.wasm")]
     pub child_spot: Handle<WasmScript>,
+    #[asset(path = "scripts/staging.wasm")]
+    pub staging: Handle<WasmScript>,
 }
 
 #[derive(AssetCollection, Resource)]
@@ -74,6 +79,15 @@ pub struct HarvestableAssets {
 }
 
 #[derive(AssetCollection, Resource)]
+pub struct TroopAssets {
+    #[asset(
+        paths("troops/archer.troop", "troops/soldier.troop",),
+        collection(typed)
+    )]
+    pub troops: Vec<Handle<TroopType>>,
+}
+
+#[derive(AssetCollection, Resource)]
 pub struct TextureAssets {
     #[asset(texture_atlas(tile_size_x = 32., tile_size_y = 32., rows = 2, columns = 16))]
     #[asset(path = "textures/HarvestBase.png")]
@@ -84,4 +98,7 @@ pub struct TextureAssets {
     #[asset(texture_atlas(tile_size_x = 32., tile_size_y = 32., rows = 4, columns = 4))]
     #[asset(path = "textures/Harvestables.png")]
     pub harvestables: Handle<TextureAtlas>,
+    #[asset(texture_atlas(tile_size_x = 32., tile_size_y = 32., rows = 4, columns = 4))]
+    #[asset(path = "textures/Troops.png")]
+    pub troops: Handle<TextureAtlas>,
 }

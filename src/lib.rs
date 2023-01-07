@@ -1,5 +1,8 @@
 mod actions;
 mod audio;
+mod battle;
+mod battle_scripting;
+mod common_scripting;
 mod delivery;
 mod delivery_scripting;
 mod harvest;
@@ -16,6 +19,7 @@ use crate::loading::LoadingPlugin;
 use crate::menu::MenuPlugin;
 use crate::player::PlayerPlugin;
 
+use battle::BattlePlugin;
 use bevy::app::App;
 #[cfg(debug_assertions)]
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
@@ -46,6 +50,7 @@ impl Plugin for GamePlugin {
             .add_plugin(MenuPlugin)
             .add_plugin(ActionsPlugin)
             .add_plugin(InternalAudioPlugin)
+            .add_plugin(BattlePlugin)
             .add_plugin(DeliveryPlugin)
             .add_plugin(MarketPlugin)
             .add_plugin(HarvestPlugin)

@@ -1,3 +1,5 @@
+#![allow(unused_variables)]
+mod common_imports;
 mod delivery_imports;
 use delivery_imports::*;
 
@@ -7,7 +9,7 @@ pub unsafe extern "C" fn can_produce(me: EntityId) -> Bool {
     if !harvestable.is_missing() {
         (get_harvest_spot_progress_perc(me) >= 1.).into()
     } else {
-        Bool::FALSE()
+        Bool::r#false()
     }
 }
 

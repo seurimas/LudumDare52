@@ -1,9 +1,11 @@
+#![allow(unused_variables)]
+mod common_imports;
 mod delivery_imports;
 use delivery_imports::*;
 
 #[no_mangle]
 pub unsafe extern "C" fn can_produce(me: EntityId) -> Bool {
-    Bool::TRUE()
+    Bool::r#true()
 }
 
 #[no_mangle]
@@ -14,9 +16,9 @@ pub unsafe extern "C" fn produce(me: EntityId) -> EntityId {
 #[no_mangle]
 pub unsafe extern "C" fn can_receive(me: EntityId, delivery: EntityId) -> Bool {
     if get_harvestable_value(delivery) != -1 {
-        Bool::TRUE()
+        Bool::r#true()
     } else {
-        Bool::FALSE()
+        Bool::r#false()
     }
 }
 

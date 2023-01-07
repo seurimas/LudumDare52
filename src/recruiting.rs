@@ -132,7 +132,7 @@ fn spawn_archery_field(
             sprite: SpriteSheetBundle {
                 texture_atlas: textures.locations.clone(),
                 sprite: TextureAtlasSprite {
-                    index: 2,
+                    index: 3,
                     ..Default::default()
                 },
                 transform: Transform::from_translation(Vec3::new(-128., -128., 1.)),

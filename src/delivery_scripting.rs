@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use bevy_wasm_scripting::*;
 use wasmer::*;
 
+use crate::battle::StagingLocation;
+use crate::common_scripting::*;
 use crate::delivery::*;
 use crate::harvest::*;
 use crate::loading::*;
@@ -64,11 +66,13 @@ fn get_delivery_imports_from_world<S: 'static + Send + Sync>(
             "get_harvestable_id" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_harvestable_id),
             "get_harvestable_value" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_harvestable_value),
             "get_harvestable_is_plant" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_harvestable_is_plant),
+            "get_harvestable_troop_id" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_harvestable_troop_id),
 
             "get_harvest_spot_progress" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_harvest_spot_progress),
             "get_harvest_spot_progress_perc" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_harvest_spot_progress_perc),
             "get_harvest_spot_harvest_time" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_harvest_spot_harvest_time),
             "get_harvest_spot_harvestable" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_harvest_spot_harvestable),
+
             "set_harvest_spot_progress" => Function::new_typed_with_env(&mut wasmer_store.0, &env, set_harvest_spot_progress::<S>),
             "set_harvest_spot_progress_perc" => Function::new_typed_with_env(&mut wasmer_store.0, &env, set_harvest_spot_progress_perc::<S>),
             "set_harvest_spot_harvest_time" => Function::new_typed_with_env(&mut wasmer_store.0, &env, set_harvest_spot_harvest_time::<S>),
@@ -76,67 +80,8 @@ fn get_delivery_imports_from_world<S: 'static + Send + Sync>(
 
             "get_free_child_harvest_spot" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_free_child_harvest_spot::<S>),
             "set_visibility" => Function::new_typed_with_env(&mut wasmer_store.0, &env, set_visibility::<S>),
+            "stage_troop" => Function::new_typed_with_env(&mut wasmer_store.0, &env, stage_troop::<S>),
         }
-    }
-}
-
-fn despawn_entity<S: 'static + Send + Sync>(
-    env: FunctionEnvMut<WorldPointer>,
-    entity_id: EntityId,
-) {
-    env.data()
-        .commands::<S>()
-        .entity(entity_id.to_entity())
-        .despawn();
-}
-
-fn attach_child<S: 'static + Send + Sync>(
-    env: FunctionEnvMut<WorldPointer>,
-    me: EntityId,
-    child: EntityId,
-) {
-    env.data()
-        .commands::<S>()
-        .entity(me.to_entity())
-        .add_child(child.to_entity());
-}
-
-fn spawn_harvestable_by_id<S: 'static + Send + Sync>(
-    env: FunctionEnvMut<WorldPointer>,
-    id: i32,
-    real: i8,
-) -> EntityId {
-    let world = env.data().read();
-    let sprite_assets = world.get_resource::<TextureAssets>().unwrap();
-    let harvestables = world.get_resource::<HarvestableTypes>().unwrap();
-    if let Some(harvestable) = harvestables.get(id) {
-        println!("Spawning {}", harvestable.id);
-        EntityId::from_entity({
-            env.data()
-                .commands::<S>()
-                .spawn(HarvestableBundle {
-                    sprite: SpriteSheetBundle {
-                        texture_atlas: sprite_assets.harvestables.clone(),
-                        sprite: TextureAtlasSprite {
-                            index: if real == 1 {
-                                harvestable.sprite_index
-                            } else {
-                                harvestable
-                                    .seed_sprite_index
-                                    .unwrap_or(harvestable.sprite_index)
-                            },
-                            ..Default::default()
-                        },
-                        visibility: Visibility::INVISIBLE,
-                        ..Default::default()
-                    },
-                    harvestable: Harvestable(harvestable, real == 1),
-                })
-                .id()
-        })
-    } else {
-        println!("No harvestable {}", id);
-        EntityId::missing()
     }
 }
 
@@ -168,6 +113,14 @@ fn get_harvestable_is_plant(env: FunctionEnvMut<WorldPointer>, entity_id: Entity
         .get::<Harvestable>(entity_id.to_entity())
         .map(|harvestable| if harvestable.0.plant { 1 } else { 0 })
         .unwrap_or(0)
+}
+
+fn get_harvestable_troop_id(env: FunctionEnvMut<WorldPointer>, entity_id: EntityId) -> i32 {
+    env.data()
+        .read()
+        .get::<Harvestable>(entity_id.to_entity())
+        .and_then(|harvestable| harvestable.0.troop_id)
+        .unwrap_or(-1)
 }
 
 fn get_harvest_spot_progress(env: FunctionEnvMut<WorldPointer>, entity_id: EntityId) -> f32 {
@@ -314,5 +267,18 @@ fn set_visibility<S: 'static + Send + Sync>(
         .get_mut::<Visibility>(entity_id.to_entity())
     {
         visibility.is_visible = new_visibility == 1;
+    }
+}
+fn stage_troop<S: 'static + Send + Sync>(
+    env: FunctionEnvMut<WorldPointer>,
+    entity_id: EntityId,
+    troop_id: i32,
+) {
+    if let Some(mut staging) = env
+        .data()
+        .write()
+        .get_mut::<StagingLocation>(entity_id.to_entity())
+    {
+        staging.stage(troop_id);
     }
 }

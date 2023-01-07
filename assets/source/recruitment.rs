@@ -1,9 +1,11 @@
+#![allow(unused_variables)]
+mod common_imports;
 mod delivery_imports;
 use delivery_imports::*;
 
 #[no_mangle]
 pub unsafe extern "C" fn can_produce(me: EntityId) -> Bool {
-    Bool::TRUE()
+    Bool::r#true()
 }
 
 #[no_mangle]

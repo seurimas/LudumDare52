@@ -66,6 +66,7 @@ pub struct HarvestableType {
     pub seed_sprite_index: Option<usize>,
     pub value: i32,
     pub plant: bool,
+    pub troop_id: Option<i32>,
 }
 
 #[derive(Default)]
