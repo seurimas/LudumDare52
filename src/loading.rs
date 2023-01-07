@@ -46,6 +46,8 @@ pub struct AudioAssets {
 pub struct DeliveryScripts {
     #[asset(path = "scripts/field_spot.wasm")]
     pub field_spot: Handle<WasmScript>,
+    #[asset(path = "scripts/market.wasm")]
+    pub market: Handle<WasmScript>,
 }
 
 #[derive(AssetCollection, Resource)]

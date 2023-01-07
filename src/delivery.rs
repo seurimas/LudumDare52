@@ -1,24 +1,25 @@
 use bevy::prelude::*;
 use bevy_wasm_scripting::*;
-use wasmer::*;
 
-use crate::{
-    harvest::{HarvestSpot, Harvestable, HarvestableType},
-    GameState,
-};
+use crate::GameState;
 
 pub struct DeliveryPlugin;
 
 impl Plugin for DeliveryPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<DeliveryItem>()
+            .add_system_set(SystemSet::on_update(GameState::Playing).with_system(
+                ScriptSystemWithCommands::<_, DeliverySource>::wrap(IntoSystem::into_system(
+                    delivery_sourcing_system,
+                )),
+            ))
+            .add_system_set(SystemSet::on_update(GameState::Playing).with_system(
+                ScriptSystemWithCommands::<_, DeliverySource>::wrap(IntoSystem::into_system(
+                    delivery_dropoff_system,
+                )),
+            ))
             .add_system_set(
-                SystemSet::on_update(GameState::Playing)
-                    .with_system(delivery_sourcing_system.uses_commands()),
-            )
-            .add_system_set(
-                SystemSet::on_update(GameState::Playing)
-                    .with_system(delivery_dropoff_system.uses_commands::<DeliverySource>()),
+                SystemSet::on_update(GameState::Playing).with_system(delivery_dragging_system),
             )
             .add_wasm_script_component::<DeliverySource>()
             .add_wasm_script_component::<DeliveryDropoff>();
@@ -94,6 +95,43 @@ fn get_anchor_distance_sq(
     };
     let result = mouse_location.distance_squared(anchor_base) as i32;
     result
+}
+
+fn delivery_dragging_system(
+    mut mouse_location: Local<Vec2>,
+    mut commands: Commands,
+    parents: Query<&Parent>,
+    mut transforms: Query<(&mut Visibility, &mut Transform)>,
+    delivery_item: Res<DeliveryItem>,
+    camera: Query<(&Camera, &GlobalTransform)>,
+    mut cursor_moved: EventReader<CursorMoved>,
+) {
+    let (camera, camera_transform) = camera.single();
+    for event in cursor_moved.iter() {
+        *mouse_location = event.position;
+    }
+    let mouse_world_location = camera
+        .viewport_to_world(camera_transform, *mouse_location)
+        .unwrap()
+        .origin;
+    match *delivery_item {
+        DeliveryItem::Nothing => {}
+        DeliveryItem::FromSource {
+            delivered,
+            source: _,
+        } => {
+            if parents.get(delivered).is_ok() {
+                commands.entity(delivered).remove_parent();
+            } else {
+                if let Ok((mut visibility, mut transform)) = transforms.get_mut(delivered) {
+                    *visibility = Visibility::VISIBLE;
+                    transform.translation.x = mouse_world_location.x;
+                    transform.translation.y = mouse_world_location.y;
+                    transform.translation.z = 10.;
+                }
+            }
+        }
+    }
 }
 
 fn delivery_sourcing_system(
@@ -203,35 +241,35 @@ fn delivery_dropoff_system(
     match *script_env.resources.0 {
         DeliveryItem::Nothing => {}
         DeliveryItem::FromSource { delivered, source } => {
-            let closest_anchor = delivery_anchors
-                .iter()
-                .filter(|(entity, _delivery_transform, dropoff, _anchor)| {
-                    match script_env.call_if_instantiated_2::<EntityId, EntityId, i8>(
-                        &dropoff.script,
-                        "can_receive",
-                        EntityId::from_entity(*entity),
-                        EntityId::from_entity(delivered),
-                    ) {
-                        Ok(can_produce) => {
-                            if can_produce == 1 {
-                                true
-                            } else {
+            if mouse_buttons.just_released(MouseButton::Left) {
+                let closest_anchor = delivery_anchors
+                    .iter()
+                    .filter(|(entity, _delivery_transform, dropoff, _anchor)| {
+                        match script_env.call_if_instantiated_2::<EntityId, EntityId, i8>(
+                            &dropoff.script,
+                            "can_receive",
+                            EntityId::from_entity(*entity),
+                            EntityId::from_entity(delivered),
+                        ) {
+                            Ok(can_produce) => {
+                                if can_produce == 1 {
+                                    true
+                                } else {
+                                    false
+                                }
+                            }
+                            Err(err) => {
+                                error!("Error in can_receive: {:?}", err);
                                 false
                             }
                         }
-                        Err(err) => {
-                            error!("Error in can_receive: {:?}", err);
-                            false
-                        }
-                    }
-                })
-                .min_by_key(|(_entity, delivery_transform, _dropoff, anchor)| {
-                    get_anchor_distance_sq(mouse_world_location, delivery_transform, anchor)
-                });
-            if let Some((entity, delivery_transform, dropoff, anchor)) = closest_anchor {
-                let distance_to_anchor =
-                    get_anchor_distance_sq(mouse_world_location, delivery_transform, anchor);
-                if mouse_buttons.just_released(MouseButton::Left) {
+                    })
+                    .min_by_key(|(_entity, delivery_transform, _dropoff, anchor)| {
+                        get_anchor_distance_sq(mouse_world_location, delivery_transform, anchor)
+                    });
+                if let Some((entity, delivery_transform, dropoff, anchor)) = closest_anchor {
+                    let distance_to_anchor =
+                        get_anchor_distance_sq(mouse_world_location, delivery_transform, anchor);
                     if distance_to_anchor < anchor.distance_sq {
                         match script_env.call_if_instantiated_3::<EntityId, EntityId, EntityId, ()>(
                             &dropoff.script,
@@ -248,9 +286,9 @@ fn delivery_dropoff_system(
                                 error!("Error in produce: {:?}", err);
                             }
                         }
+                        return;
                     }
                 }
-            } else if mouse_buttons.just_released(MouseButton::Left) {
                 if let Ok(delivery_source) = delivery_source.get(source) {
                     match script_env.call_if_instantiated_2::<EntityId, EntityId, ()>(
                         &delivery_source.script,
@@ -262,7 +300,7 @@ fn delivery_dropoff_system(
                             println!("Rejected!");
                         }
                         Err(err) => {
-                            error!("Error in produce: {:?}", err);
+                            error!("Error in rejected: {:?}", err);
                         }
                     }
                 }

@@ -4,6 +4,7 @@ mod delivery;
 mod delivery_scripting;
 mod harvest;
 mod loading;
+mod market;
 mod menu;
 mod player;
 
@@ -19,6 +20,7 @@ use bevy::app::App;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use delivery::DeliveryPlugin;
+use market::MarketPlugin;
 
 // This example game uses States to separate logic
 // See https://bevy-cheatbook.github.io/programming/states.html
@@ -43,6 +45,7 @@ impl Plugin for GamePlugin {
             .add_plugin(ActionsPlugin)
             .add_plugin(InternalAudioPlugin)
             .add_plugin(DeliveryPlugin)
+            .add_plugin(MarketPlugin)
             .add_plugin(HarvestPlugin)
             .add_plugin(PlayerPlugin);
 

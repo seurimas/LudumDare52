@@ -27,7 +27,7 @@ impl Plugin for HarvestPlugin {
                 SystemSet::on_update(GameState::Playing).with_system(harvest_highlight_system),
             )
             .add_system_set(
-                SystemSet::on_update(GameState::Playing).with_system(harvestable_spawn_system),
+                SystemSet::on_update(GameState::Playing).with_system(harvestable_growth_system),
             );
     }
 }
@@ -61,6 +61,8 @@ pub struct HarvestableType {
     pub id: i32,
     pub base_harvest_time: f32,
     pub sprite_index: usize,
+    pub seed_sprite_index: Option<usize>,
+    pub value: i32,
 }
 
 #[derive(Default)]
@@ -105,12 +107,12 @@ impl HarvestableTypes {
 }
 
 #[derive(Component)]
-pub struct Harvestable(pub HarvestableType);
+pub struct Harvestable(pub HarvestableType, pub bool);
 
 #[derive(Bundle)]
 pub struct HarvestableBundle {
-    sprite: SpriteSheetBundle,
-    harvestable: Harvestable,
+    pub sprite: SpriteSheetBundle,
+    pub harvestable: Harvestable,
 }
 
 #[derive(Bundle)]
@@ -127,50 +129,34 @@ fn spawn_harvest_spots(
     textures: Res<TextureAssets>,
     scripts: Res<DeliveryScripts>,
 ) {
-    commands.spawn(HarvestSpotBundle {
-        sprite: SpriteSheetBundle {
-            texture_atlas: textures.harvest_base.clone(),
-            sprite: TextureAtlasSprite {
-                index: 0,
-                ..Default::default()
-            },
-            transform: Transform::from_translation(Vec3::new(0., 64., 1.)),
-            ..Default::default()
-        },
-        harvest_spot: HarvestSpot {
-            harvestable_type: None,
-            harvestable_entity: None,
-            progress: 0.,
-            harvest_time: 0.,
-        },
-        delivery_anchor: DeliveryAnchor::new(0., -8., 16., 16 * 16),
-        delivery_source: DeliverySource::new(scripts.field_spot.clone()),
-        delivery_location: DeliveryDropoff::new(scripts.field_spot.clone()),
-    });
-    commands.spawn(HarvestSpotBundle {
-        sprite: SpriteSheetBundle {
-            texture_atlas: textures.harvest_base.clone(),
-            sprite: TextureAtlasSprite {
-                index: 0,
-                ..Default::default()
-            },
-            transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
-            ..Default::default()
-        },
-        harvest_spot: HarvestSpot {
-            harvestable_type: Some(HarvestableType {
-                id: 0,
-                base_harvest_time: 2.,
-                sprite_index: 0,
-            }),
-            harvestable_entity: None,
-            progress: 0.,
-            harvest_time: 2.,
-        },
-        delivery_anchor: DeliveryAnchor::new(0., -8., 16., 16 * 16),
-        delivery_source: DeliverySource::new(scripts.field_spot.clone()),
-        delivery_location: DeliveryDropoff::new(scripts.field_spot.clone()),
-    });
+    for x in 0..3 {
+        for y in 0..2 {
+            commands.spawn(HarvestSpotBundle {
+                sprite: SpriteSheetBundle {
+                    texture_atlas: textures.harvest_base.clone(),
+                    sprite: TextureAtlasSprite {
+                        index: 0,
+                        ..Default::default()
+                    },
+                    transform: Transform::from_translation(Vec3::new(
+                        x as f32 * 32.,
+                        y as f32 * 32.,
+                        1.,
+                    )),
+                    ..Default::default()
+                },
+                harvest_spot: HarvestSpot {
+                    harvestable_type: None,
+                    harvestable_entity: None,
+                    progress: 0.,
+                    harvest_time: 0.,
+                },
+                delivery_anchor: DeliveryAnchor::new(0., -8., 16., 16 * 16),
+                delivery_source: DeliverySource::new(scripts.field_spot.clone()),
+                delivery_location: DeliveryDropoff::new(scripts.field_spot.clone()),
+            });
+        }
+    }
 }
 
 fn harvest_base_timer_system(
@@ -211,7 +197,7 @@ fn harvest_highlight_system(
     }
 }
 
-fn harvestable_spawn_system(
+fn harvestable_growth_system(
     mut commands: Commands,
     mut spot_query: Query<(Entity, &mut HarvestSpot)>,
     textures: Res<TextureAssets>,
@@ -226,10 +212,10 @@ fn harvestable_spawn_system(
                             index: 0,
                             ..Default::default()
                         },
-                        transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
+                        transform: Transform::from_translation(Vec3::new(0., 0., 10.)),
                         ..Default::default()
                     },
-                    harvestable: Harvestable(spot.harvestable_type.clone().unwrap()),
+                    harvestable: Harvestable(spot.harvestable_type.clone().unwrap(), true),
                 })
                 .id();
             spot.harvestable_entity = Some(harvestable_entity);
