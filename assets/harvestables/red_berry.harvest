@@ -1,0 +1,5 @@
+HarvestableType(
+    id: 0,
+    base_harvest_time: 6.,
+    sprite_index: 0,
+)

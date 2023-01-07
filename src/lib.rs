@@ -1,11 +1,15 @@
 mod actions;
 mod audio;
+mod delivery;
+mod delivery_scripting;
+mod harvest;
 mod loading;
 mod menu;
 mod player;
 
 use crate::actions::ActionsPlugin;
 use crate::audio::InternalAudioPlugin;
+use crate::harvest::HarvestPlugin;
 use crate::loading::LoadingPlugin;
 use crate::menu::MenuPlugin;
 use crate::player::PlayerPlugin;
@@ -14,6 +18,7 @@ use bevy::app::App;
 #[cfg(debug_assertions)]
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
+use delivery::DeliveryPlugin;
 
 // This example game uses States to separate logic
 // See https://bevy-cheatbook.github.io/programming/states.html
@@ -37,6 +42,8 @@ impl Plugin for GamePlugin {
             .add_plugin(MenuPlugin)
             .add_plugin(ActionsPlugin)
             .add_plugin(InternalAudioPlugin)
+            .add_plugin(DeliveryPlugin)
+            .add_plugin(HarvestPlugin)
             .add_plugin(PlayerPlugin);
 
         #[cfg(debug_assertions)]

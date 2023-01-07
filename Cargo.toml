@@ -1,8 +1,8 @@
 [package]
-name = "bevy_game" # ToDo
+name = "harvests_of_war"
 version = "0.1.0"
 publish = false
-authors = ["Niklas Eicker <git@nikl.me>"] # ToDo: you are the author ;)
+authors = ["Seurimas <@seurimas@compound.social>"]
 edition = "2021"
 exclude = ["dist", "build", "assets", "credits"]
 
@@ -24,8 +24,13 @@ dev = [
 [dependencies]
 bevy = { version = "0.9", default-features = false, features = ["bevy_asset", "bevy_winit", "render", "png", "x11"] }
 bevy_kira_audio = { version = "0.13" }
-bevy_asset_loader = { version = "0.14" }
+bevy_asset_loader = { version = "0.14", features = ["2d"] }
 rand = { version = "0.8.3" }
+bevy_wasm_scripting = { path = "../bevy_wasmer_scripting" }
+wasmer = { version = "3", features = ["wat", "std"], default-features = false }
+anyhow = "1.0"
+serde = { version = "1", features = ["derive"] }
+ron = "0.8"
 
 # keep the following in sync with Bevy's dependencies
 winit = { version = "0.27", default-features = false }

@@ -1,7 +1,11 @@
-use crate::GameState;
+use crate::{
+    harvest::{Harvestable, HarvestableType, HarvestableTypes},
+    GameState,
+};
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 use bevy_kira_audio::AudioSource;
+use bevy_wasm_scripting::WasmScript;
 
 pub struct LoadingPlugin;
 
@@ -15,6 +19,9 @@ impl Plugin for LoadingPlugin {
                 .with_collection::<FontAssets>()
                 .with_collection::<AudioAssets>()
                 .with_collection::<TextureAssets>()
+                .with_collection::<DeliveryScripts>()
+                .with_collection::<HarvestableAssets>()
+                .init_resource::<HarvestableTypes>()
                 .continue_to_state(GameState::Menu),
         );
     }
@@ -36,7 +43,26 @@ pub struct AudioAssets {
 }
 
 #[derive(AssetCollection, Resource)]
+pub struct DeliveryScripts {
+    #[asset(path = "scripts/field_spot.wasm")]
+    pub field_spot: Handle<WasmScript>,
+}
+
+#[derive(AssetCollection, Resource)]
+pub struct HarvestableAssets {
+    #[asset(path = "harvestables/red_berry.harvest")]
+    pub red_berry: Handle<HarvestableType>,
+}
+
+#[derive(AssetCollection, Resource)]
 pub struct TextureAssets {
-    #[asset(path = "textures/bevy.png")]
-    pub texture_bevy: Handle<Image>,
+    #[asset(texture_atlas(tile_size_x = 32., tile_size_y = 32., rows = 2, columns = 16))]
+    #[asset(path = "textures/HarvestBase.png")]
+    pub harvest_base: Handle<TextureAtlas>,
+    #[asset(texture_atlas(tile_size_x = 64., tile_size_y = 64., rows = 8, columns = 8))]
+    #[asset(path = "textures/Locations.png")]
+    pub locations: Handle<TextureAtlas>,
+    #[asset(texture_atlas(tile_size_x = 32., tile_size_y = 32., rows = 4, columns = 4))]
+    #[asset(path = "textures/Harvestables.png")]
+    pub harvestables: Handle<TextureAtlas>,
 }
