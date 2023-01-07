@@ -1,4 +1,5 @@
 mod actions;
+mod attacks;
 mod audio;
 mod battle;
 mod battle_scripting;

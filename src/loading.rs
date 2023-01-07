@@ -1,4 +1,5 @@
 use crate::{
+    attacks::{AttackType, AttackTypes},
     battle::{TroopType, TroopTypes},
     harvest::{Harvestable, HarvestableType, HarvestableTypes},
     GameState,
@@ -22,9 +23,11 @@ impl Plugin for LoadingPlugin {
                 .with_collection::<TextureAssets>()
                 .with_collection::<DeliveryScripts>()
                 .with_collection::<HarvestableAssets>()
+                .with_collection::<AttackAssets>()
                 .with_collection::<TroopAssets>()
                 .init_resource::<HarvestableTypes>()
                 .init_resource::<TroopTypes>()
+                .init_resource::<AttackTypes>()
                 .continue_to_state(GameState::Menu),
         );
     }
@@ -79,9 +82,18 @@ pub struct HarvestableAssets {
 }
 
 #[derive(AssetCollection, Resource)]
+pub struct AttackAssets {
+    #[asset(
+        paths("attacks/slash.attack", "attacks/arrow.attack",),
+        collection(typed)
+    )]
+    pub attacks: Vec<Handle<AttackType>>,
+}
+
+#[derive(AssetCollection, Resource)]
 pub struct TroopAssets {
     #[asset(
-        paths("troops/archer.troop", "troops/soldier.troop",),
+        paths("troops/archer.troop", "troops/soldier.troop", "troops/enemy.troop",),
         collection(typed)
     )]
     pub troops: Vec<Handle<TroopType>>,
@@ -101,4 +113,7 @@ pub struct TextureAssets {
     #[asset(texture_atlas(tile_size_x = 32., tile_size_y = 32., rows = 4, columns = 4))]
     #[asset(path = "textures/Troops.png")]
     pub troops: Handle<TextureAtlas>,
+    #[asset(texture_atlas(tile_size_x = 32., tile_size_y = 32., rows = 4, columns = 4))]
+    #[asset(path = "textures/Attacks.png")]
+    pub attacks: Handle<TextureAtlas>,
 }

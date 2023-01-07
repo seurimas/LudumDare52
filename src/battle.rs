@@ -8,7 +8,13 @@ use bevy::{
 use bevy_wasm_scripting::*;
 use serde::Deserialize;
 
-use crate::{delivery::*, harvest::spawn_harvest_spot, loading::*, GameState};
+use crate::{
+    attacks::{attack_phase_system, AttackAssetLoader, AttackType},
+    delivery::*,
+    harvest::spawn_harvest_spot,
+    loading::*,
+    GameState,
+};
 
 pub struct BattlePlugin;
 
@@ -16,6 +22,8 @@ impl Plugin for BattlePlugin {
     fn build(&self, app: &mut App) {
         app.add_asset::<TroopType>()
             .init_asset_loader::<TroopAssetLoader>()
+            .add_asset::<AttackType>()
+            .init_asset_loader::<AttackAssetLoader>()
             .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(spawn_debug_enemy))
             .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(spawn_staging_spot))
             .add_system_set(SystemSet::on_update(GameState::Playing).with_system(
@@ -23,6 +31,9 @@ impl Plugin for BattlePlugin {
                     troop_battle_action_system,
                 )),
             ))
+            .add_system_set(
+                SystemSet::on_update(GameState::Playing).with_system(attack_phase_system),
+            )
             .add_system_set(
                 SystemSet::on_update(GameState::Playing).with_system(troop_staging_system),
             )
@@ -88,7 +99,7 @@ fn spawn_debug_enemy(
         &mut commands,
         Vec2::new(0., 300.),
         textures.troops.clone(),
-        troop_types.get(0).unwrap(),
+        troop_types.get(-1).unwrap(),
         Faction::enemy(),
     );
 }
@@ -160,6 +171,7 @@ impl TroopTypes {
 #[derive(Component)]
 pub struct Troop {
     pub troop_type: TroopType,
+    pub health: i32,
     pub target: Option<(Vec2, f32)>,
     pub seen_troops: Vec<Entity>,
 }
@@ -167,10 +179,15 @@ pub struct Troop {
 impl Troop {
     pub fn new(troop_type: TroopType) -> Self {
         Self {
+            health: troop_type.health,
             troop_type,
             target: None,
             seen_troops: Vec::new(),
         }
+    }
+
+    pub fn scan(&mut self, seen_troops: Vec<Entity>) {
+        self.seen_troops = seen_troops;
     }
 }
 

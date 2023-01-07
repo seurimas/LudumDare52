@@ -7,4 +7,5 @@
 ./compile_rust.sh staging
 
 ./compile_rust.sh troop_archer
+./compile_rust.sh troop_enemy
 ./compile_rust.sh troop_soldier

@@ -2,11 +2,15 @@ use bevy::prelude::*;
 use bevy_wasm_scripting::*;
 use wasmer::*;
 
+use crate::attacks::spawn_attack;
+use crate::attacks::AttackType;
+use crate::attacks::AttackTypes;
 use crate::battle::*;
 use crate::common_scripting::*;
+use crate::loading::TextureAssets;
 
 type BattleScriptComponents = (&'static Faction, &'static Children);
-type BattleScriptResources = ();
+type BattleScriptResources = Res<'static, AttackTypes>;
 
 impl WasmScriptComponent for Troop {
     type ImportQueriedComponents = BattleScriptComponents;
@@ -44,21 +48,75 @@ fn get_battle_imports_from_world<S: 'static + Send + Sync>(
             "get_distance" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_distance),
 
             "move_towards" => Function::new_typed_with_env(&mut wasmer_store.0, &env, move_towards),
-            "attack_enemy" => Function::new_typed_with_env(&mut wasmer_store.0, &env, attack_enemy),
+            "attack_enemy" => Function::new_typed_with_env(&mut wasmer_store.0, &env, attack_enemy::<S>),
         }
     }
 }
 
-pub fn scan_enemies(env: FunctionEnvMut<WorldPointer>, me: EntityId) {}
+pub fn scan_enemies(env: FunctionEnvMut<WorldPointer>, me: EntityId) {
+    let scanned = if let Some(my_faction) = env.data().read().get::<Faction>(me.to_entity()) {
+        let world = env.data().write();
+        let mut query = world.query::<(Entity, &Troop, &Faction)>();
+        let mut seen_entities = Vec::new();
+        for (entity, _troop, faction) in query.iter(world) {
+            if entity == me.to_entity() {
+                continue;
+            } else if faction.faction_id != my_faction.faction_id {
+                seen_entities.push(entity);
+            }
+        }
+        seen_entities
+    } else {
+        Vec::new()
+    };
+    if let Some(mut troop) = env.data().write().get_mut::<Troop>(me.to_entity()) {
+        troop.scan(scanned);
+    }
+}
 pub fn get_enemy_count(env: FunctionEnvMut<WorldPointer>, me: EntityId) -> i32 {
-    0
+    if let Some(troop) = env.data().read().get::<Troop>(me.to_entity()) {
+        troop.seen_troops.len() as i32
+    } else {
+        0
+    }
 }
 pub fn get_enemy(env: FunctionEnvMut<WorldPointer>, me: EntityId, index: i32) -> EntityId {
-    EntityId::missing()
+    if let Some(troop) = env.data().read().get::<Troop>(me.to_entity()) {
+        troop
+            .seen_troops
+            .get(index as usize)
+            .map(|id| EntityId::from_entity(*id))
+            .unwrap_or(EntityId::missing())
+    } else {
+        EntityId::missing()
+    }
 }
+
 pub fn get_nearest_enemy(env: FunctionEnvMut<WorldPointer>, me: EntityId) -> EntityId {
-    EntityId::missing()
+    let my_transform = env.data().read().get::<GlobalTransform>(me.to_entity());
+    if my_transform.is_none() {
+        return EntityId::missing();
+    }
+    let my_transform = my_transform.unwrap();
+    env.data()
+        .read()
+        .get::<Troop>(me.to_entity())
+        .and_then(|troop| {
+            troop.seen_troops.iter().min_by_key(|other| {
+                let other_transform = env.data().read().get::<GlobalTransform>(**other);
+                if other_transform.is_none() {
+                    return i32::MAX;
+                }
+                let other_transform = other_transform.unwrap();
+                return my_transform
+                    .translation()
+                    .distance_squared(other_transform.translation()) as i32;
+            })
+        })
+        .map(|entity| EntityId::from_entity(*entity))
+        .unwrap_or(EntityId::missing())
 }
+
 pub fn get_x_of(env: FunctionEnvMut<WorldPointer>, me: EntityId) -> f32 {
     env.data()
         .read()
@@ -90,10 +148,25 @@ pub fn move_towards(env: FunctionEnvMut<WorldPointer>, me: EntityId, x: f32, y: 
     }
 }
 
-pub fn attack_enemy(
+pub fn attack_enemy<S: 'static + Send + Sync>(
     env: FunctionEnvMut<WorldPointer>,
     me: EntityId,
     enemy: EntityId,
     attack_id: i32,
 ) {
+    if let (Some(attack_type), Some(sprites)) = (
+        env.data()
+            .read()
+            .get_resource::<AttackTypes>()
+            .and_then(|attack_types| attack_types.get(attack_id)),
+        env.data().read().get_resource::<TextureAssets>(),
+    ) {
+        spawn_attack(
+            &mut env.data().commands::<S>(),
+            me.to_entity(),
+            enemy.to_entity(),
+            sprites.attacks.clone(),
+            attack_type,
+        );
+    }
 }

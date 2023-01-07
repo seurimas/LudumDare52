@@ -1,0 +1,17 @@
+#![enable(implicit_some)]
+AttackType(
+    id: 1,
+    phases: [
+        Projectile (
+            sprite_index: 0,
+            speed: 128.,
+        ),
+        Damage (
+            amount: 1,
+        ),
+        Overlay (
+            sprite_index: 1,
+            duration: 0.125,
+        ),
+    ],
+)
