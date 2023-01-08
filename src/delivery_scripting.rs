@@ -62,10 +62,16 @@ fn get_delivery_imports_from_world<S: 'static + Send + Sync>(
             "despawn_entity" => Function::new_typed_with_env(&mut wasmer_store.0, &env, despawn_entity::<S>),
             "attach_child" => Function::new_typed_with_env(&mut wasmer_store.0, &env, attach_child::<S>),
             "spawn_harvestable_by_id" => Function::new_typed_with_env(&mut wasmer_store.0, &env, spawn_harvestable_by_id::<S>),
+            "play_sound" => Function::new_typed_with_env(&mut wasmer_store.0, &env, play_sound),
+            "get_random" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_random),
+            "get_script_value" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_script_value),
+            "set_script_value" => Function::new_typed_with_env(&mut wasmer_store.0, &env, set_script_value),
+            "heal_troop" => Function::new_typed_with_env(&mut wasmer_store.0, &env, heal_troop),
 
             "get_harvestable_id" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_harvestable_id),
             "get_harvestable_value" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_harvestable_value),
             "get_harvestable_is_plant" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_harvestable_is_plant),
+            "get_harvestable_is_real" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_harvestable_is_real),
             "get_harvestable_troop_id" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_harvestable_troop_id),
 
             "get_harvest_spot_progress" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_harvest_spot_progress),
@@ -105,6 +111,14 @@ fn get_harvestable_value(env: FunctionEnvMut<WorldPointer>, entity_id: EntityId)
             }
         })
         .unwrap_or(-1)
+}
+
+fn get_harvestable_is_real(env: FunctionEnvMut<WorldPointer>, entity_id: EntityId) -> i32 {
+    env.data()
+        .read()
+        .get::<Harvestable>(entity_id.to_entity())
+        .map(|harvestable| if harvestable.1 { 1 } else { 0 })
+        .unwrap_or(0)
 }
 
 fn get_harvestable_is_plant(env: FunctionEnvMut<WorldPointer>, entity_id: EntityId) -> i32 {

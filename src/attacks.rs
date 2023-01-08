@@ -5,15 +5,20 @@ use bevy::{
     reflect::TypeUuid,
     utils::HashMap,
 };
+use bevy_kira_audio::prelude::{Audio, *};
 use bevy_wasm_scripting::*;
 use serde::Deserialize;
 
-use crate::{battle::Troop, loading::AttackAssets};
+use crate::{
+    battle::Troop,
+    loading::{AttackAssets, AudioAssets},
+};
 
 #[derive(Clone, Deserialize, TypeUuid)]
 #[uuid = "7969889c-91e5-4d22-b6b4-55b0eaeed27d"]
 pub struct AttackType {
     pub id: i32,
+    pub cooldown: f32,
     pub phases: Vec<AttackPhase>,
 }
 
@@ -23,6 +28,7 @@ pub enum AttackPhase {
     Overlay { sprite_index: usize, duration: f32 },
     Damage { amount: i32 },
     Hidden { duration: f32 },
+    PickSound { options: Vec<usize> },
 }
 
 #[derive(Default)]
@@ -117,6 +123,8 @@ pub fn attack_phase_system(
         &mut Visibility,
     )>,
     mut troops: Query<(&mut Troop, &GlobalTransform)>,
+    audio_assets: Res<AudioAssets>,
+    audio: Res<Audio>,
     time: Res<Time>,
 ) {
     let delta_seconds = time.delta_seconds();
@@ -165,6 +173,13 @@ pub fn attack_phase_system(
                     attack.phase = None;
                 }
             }
+            Some(AttackPhase::PickSound { options }) => {
+                let index = (rand::random::<f32>() * options.len() as f32).floor() as usize;
+                let index = options[index];
+                let sound = audio_assets.collection[index].clone();
+                audio.play(sound);
+                attack.phase = None;
+            }
             None => {}
         }
         if attack.phase.is_none() {
@@ -191,6 +206,7 @@ pub fn attack_phase_system(
                             transform.translation.x = my_global.translation().x;
                             transform.translation.y = my_global.translation().y;
                             transform.translation.z = 20.;
+                            transform.rotation = Quat::default();
                         }
                         sprite.index = *sprite_index;
                         *visibility = Visibility::VISIBLE;
@@ -199,6 +215,9 @@ pub fn attack_phase_system(
                         *visibility = Visibility::INVISIBLE;
                     }
                     AttackPhase::Hidden { duration } => {
+                        *visibility = Visibility::INVISIBLE;
+                    }
+                    AttackPhase::PickSound { options } => {
                         *visibility = Visibility::INVISIBLE;
                     }
                 }

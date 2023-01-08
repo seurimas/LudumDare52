@@ -37,6 +37,11 @@ fn get_battle_imports_from_world<S: 'static + Send + Sync>(
             "despawn_entity" => Function::new_typed_with_env(&mut wasmer_store.0, &env, despawn_entity::<S>),
             "attach_child" => Function::new_typed_with_env(&mut wasmer_store.0, &env, attach_child::<S>),
             "spawn_harvestable_by_id" => Function::new_typed_with_env(&mut wasmer_store.0, &env, spawn_harvestable_by_id::<S>),
+            "play_sound" => Function::new_typed_with_env(&mut wasmer_store.0, &env, play_sound),
+            "get_random" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_random),
+            "get_script_value" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_script_value),
+            "set_script_value" => Function::new_typed_with_env(&mut wasmer_store.0, &env, set_script_value),
+            "heal_troop" => Function::new_typed_with_env(&mut wasmer_store.0, &env, heal_troop),
 
             "scan_enemies" => Function::new_typed_with_env(&mut wasmer_store.0, &env, scan_enemies),
             "get_enemy_count" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_enemy_count),
@@ -153,7 +158,7 @@ pub fn attack_enemy<S: 'static + Send + Sync>(
     me: EntityId,
     enemy: EntityId,
     attack_id: i32,
-) {
+) -> f32 {
     if let (Some(attack_type), Some(sprites)) = (
         env.data()
             .read()
@@ -161,6 +166,7 @@ pub fn attack_enemy<S: 'static + Send + Sync>(
             .and_then(|attack_types| attack_types.get(attack_id)),
         env.data().read().get_resource::<TextureAssets>(),
     ) {
+        let cooldown = attack_type.cooldown;
         spawn_attack(
             &mut env.data().commands::<S>(),
             me.to_entity(),
@@ -168,5 +174,8 @@ pub fn attack_enemy<S: 'static + Send + Sync>(
             sprites.attacks.clone(),
             attack_type,
         );
+        cooldown
+    } else {
+        0.
     }
 }

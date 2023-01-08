@@ -12,5 +12,5 @@ extern "C" {
     pub fn get_distance(me: EntityId, other: EntityId) -> f32;
 
     pub fn move_towards(me: EntityId, x: f32, y: f32, speed: f32);
-    pub fn attack_enemy(me: EntityId, enemy: EntityId, attack_id: i32);
+    pub fn attack_enemy(me: EntityId, enemy: EntityId, attack_id: i32) -> f32;
 }

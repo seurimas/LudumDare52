@@ -1,6 +1,6 @@
 #![enable(implicit_some)]
 AttackType(
-    id: 1,
+    id: -1,
     cooldown: 1.,
     phases: [
         PickSound (

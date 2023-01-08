@@ -1,6 +1,6 @@
 #![enable(implicit_some)]
 AttackType(
-    id: 2,
+    id: -2,
     cooldown: 2.,
     phases: [
         PickSound (
@@ -12,13 +12,6 @@ AttackType(
         ),
         PickSound (
             options: [0,1,2,3,4],
-        ),
-        Damage (
-            amount: 1,
-        ),
-        Overlay (
-            sprite_index: 1,
-            duration: 0.125,
         ),
     ],
 )

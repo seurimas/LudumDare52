@@ -10,6 +10,7 @@ use serde::Deserialize;
 
 use crate::{
     attacks::{attack_phase_system, AttackAssetLoader, AttackType},
+    common_scripting::ScriptValues,
     delivery::*,
     harvest::spawn_harvest_spot,
     loading::*,
@@ -25,7 +26,9 @@ impl Plugin for BattlePlugin {
             .add_asset::<AttackType>()
             .init_asset_loader::<AttackAssetLoader>()
             .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(spawn_debug_enemy))
-            .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(spawn_staging_spot))
+            .add_system_set(
+                SystemSet::on_enter(GameState::Playing).with_system(spawn_player_staging_spot),
+            )
             .add_system_set(SystemSet::on_update(GameState::Playing).with_system(
                 ScriptSystemWithCommands::<_, Troop>::wrap(IntoSystem::into_system(
                     troop_battle_action_system,
@@ -53,6 +56,7 @@ impl Plugin for BattlePlugin {
 #[derive(Bundle)]
 pub struct StagingBundle {
     sprite: SpriteSheetBundle,
+    faction: Faction,
     staging_location: StagingLocation,
     delivery_dropoff: DeliveryDropoff,
     delivery_anchor: DeliveryAnchor,
@@ -69,7 +73,7 @@ impl StagingLocation {
     }
 }
 
-fn spawn_staging_spot(
+fn spawn_player_staging_spot(
     mut commands: Commands,
     textures: Res<TextureAssets>,
     scripts: Res<DeliveryScripts>,
@@ -84,6 +88,7 @@ fn spawn_staging_spot(
             transform: Transform::from_translation(Vec3::new(256., 0., 1.)),
             ..Default::default()
         },
+        faction: Faction::player(),
         staging_location: Default::default(),
         delivery_anchor: DeliveryAnchor::new(0., -16., 32., 32 * 32),
         delivery_dropoff: DeliveryDropoff::new(scripts.staging.clone()),
@@ -92,6 +97,7 @@ fn spawn_staging_spot(
 
 fn spawn_debug_enemy(
     mut commands: Commands,
+    delivery_scripts: Res<DeliveryScripts>,
     textures: Res<TextureAssets>,
     troop_types: Res<TroopTypes>,
 ) {
@@ -99,6 +105,7 @@ fn spawn_debug_enemy(
         &mut commands,
         Vec2::new(0., 300.),
         textures.troops.clone(),
+        delivery_scripts.deliver_troop_buffs.clone(),
         troop_types.get(-1).unwrap(),
         Faction::enemy(),
     );
@@ -140,6 +147,7 @@ impl AssetLoader for TroopAssetLoader {
             Ok(())
         })
     }
+
     fn extensions(&self) -> &[&str] {
         &["troop"]
     }
@@ -228,12 +236,16 @@ pub struct TroopBundle {
     sprite: SpriteSheetBundle,
     troop: Troop,
     faction: Faction,
+    script_values: ScriptValues,
+    delivery_dropoff: DeliveryDropoff,
+    delivery_anchor: DeliveryAnchor,
 }
 
 pub fn spawn_troop<'a, 'b, 'c>(
     commands: &'c mut Commands<'a, 'b>,
     position: Vec2,
     texture_atlas: Handle<TextureAtlas>,
+    dropoff_script: Handle<WasmScript>,
     troop: TroopType,
     faction: Faction,
 ) {
@@ -265,6 +277,11 @@ pub fn spawn_troop<'a, 'b, 'c>(
             },
             faction,
             troop: Troop::new(troop),
+            script_values: Default::default(),
+            delivery_dropoff: DeliveryDropoff {
+                script: dropoff_script.clone(),
+            },
+            delivery_anchor: DeliveryAnchor::new(0., 4., 8., 12 * 12),
         })
         .add_child(faction_indicator);
 }
@@ -347,12 +364,13 @@ fn troop_battle_action_system(
 }
 
 fn troop_staging_system(
-    mut staging_locations: Query<(&GlobalTransform, &mut StagingLocation)>,
+    mut staging_locations: Query<(&GlobalTransform, &Faction, &mut StagingLocation)>,
     mut commands: Commands,
+    delivery_scripts: Res<DeliveryScripts>,
     textures: Res<TextureAssets>,
     troop_types: Res<TroopTypes>,
 ) {
-    for (transform, mut staging_location) in staging_locations.iter_mut() {
+    for (transform, faction, mut staging_location) in staging_locations.iter_mut() {
         staging_location.staged.drain(..).for_each(|troop_type| {
             if let Some(troop_type) = troop_types.get(troop_type) {
                 let position = Vec2::new(transform.translation().x, transform.translation().y)
@@ -364,8 +382,9 @@ fn troop_staging_system(
                     &mut commands,
                     position,
                     textures.troops.clone(),
+                    delivery_scripts.deliver_troop_buffs.clone(),
                     troop_type,
-                    Faction::player(),
+                    *faction,
                 );
             }
         });

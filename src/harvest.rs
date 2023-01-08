@@ -8,6 +8,7 @@ use bevy::{
 use bevy_wasm_scripting::WasmScript;
 
 use crate::{
+    common_scripting::ScriptValues,
     delivery::{DeliveryAnchor, DeliveryDropoff, DeliverySource},
     loading::{DeliveryScripts, HarvestableAssets, TextureAssets},
     GameState,
@@ -125,6 +126,7 @@ pub struct HarvestableBundle {
 pub struct HarvestSpotBundle {
     sprite: SpriteSheetBundle,
     harvest_spot: HarvestSpot,
+    script_values: ScriptValues,
     delivery_source: DeliverySource,
     delivery_location: DeliveryDropoff,
     delivery_anchor: DeliveryAnchor,
@@ -155,6 +157,7 @@ pub fn spawn_harvest_spot<'a, 'b, 'c>(
         delivery_anchor: DeliveryAnchor::new(0., -8., 16., 16 * 16),
         delivery_source: DeliverySource::new(script.clone()),
         delivery_location: DeliveryDropoff::new(script),
+        script_values: Default::default(),
     })
 }
 

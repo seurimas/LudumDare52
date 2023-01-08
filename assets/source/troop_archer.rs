@@ -11,12 +11,20 @@ pub unsafe extern "C" fn battle_action(me: EntityId) -> f32 {
         0.0001
     } else {
         if get_distance(me, nearest_enemy) > 128. {
-            move_towards(me, get_x_of(nearest_enemy), get_y_of(nearest_enemy), 32.);
+            move_towards(
+                me,
+                get_x_of(nearest_enemy),
+                get_y_of(nearest_enemy),
+                32. * get_script_value(me, SPEED_MOD_ID, 1.0),
+            );
             0.1
         } else {
             move_towards(me, 0., 0., 0.);
-            attack_enemy(me, nearest_enemy, 1);
-            2.
+            if get_random() < get_script_value(nearest_enemy, DODGE_CHANCE_ID, 0.0) {
+                attack_enemy(me, nearest_enemy, -2) * get_script_value(me, ATTACK_SPEED_MOD_ID, 1.0)
+            } else {
+                attack_enemy(me, nearest_enemy, 2) * get_script_value(me, ATTACK_SPEED_MOD_ID, 1.0)
+            }
         }
     }
 }

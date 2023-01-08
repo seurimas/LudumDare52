@@ -44,8 +44,24 @@ pub struct FontAssets {
 
 #[derive(AssetCollection, Resource)]
 pub struct AudioAssets {
-    #[asset(path = "audio/flying.ogg")]
-    pub flying: Handle<AudioSource>,
+    #[asset(
+        paths(
+            "audio/hit0.mp3",
+            "audio/hit1.mp3",
+            "audio/hit2.mp3",
+            "audio/hit3.mp3",
+            "audio/hit4.mp3",
+            "audio/shoot0.mp3",
+            "audio/shoot1.mp3",
+            "audio/shoot2.mp3",
+            "audio/shoot3.mp3",
+            "audio/shoot4.mp3",
+            "audio/loot0.mp3",
+            "audio/loot1.mp3",
+        ),
+        collection(typed)
+    )]
+    pub collection: Vec<Handle<AudioSource>>,
 }
 
 #[derive(AssetCollection, Resource)]
@@ -64,6 +80,8 @@ pub struct DeliveryScripts {
     pub child_spot: Handle<WasmScript>,
     #[asset(path = "scripts/staging.wasm")]
     pub staging: Handle<WasmScript>,
+    #[asset(path = "scripts/deliver_troop_buffs.wasm")]
+    pub deliver_troop_buffs: Handle<WasmScript>,
 }
 
 #[derive(AssetCollection, Resource)]

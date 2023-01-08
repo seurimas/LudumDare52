@@ -6,6 +6,7 @@ pub const RECRUIT: i32 = 3;
 extern "C" {
     pub fn get_harvestable_id(me: EntityId) -> i32;
     pub fn get_harvestable_value(me: EntityId) -> i32;
+    pub fn get_harvestable_is_real(me: EntityId) -> Bool;
     pub fn get_harvestable_is_plant(me: EntityId) -> Bool;
     pub fn get_harvestable_troop_id(me: EntityId) -> i32;
 
