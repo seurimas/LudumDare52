@@ -29,7 +29,7 @@ pub unsafe extern "C" fn receive(me: EntityId, delivery: EntityId, from: EntityI
             set_script_value(
                 me,
                 SPEED_MOD_ID,
-                get_script_value(me, SPEED_MOD_ID, 1.) * 1.2,
+                (get_script_value(me, SPEED_MOD_ID, 1.) * 1.2).clamp(1., 3.),
             );
         }
         2 => {
@@ -37,7 +37,7 @@ pub unsafe extern "C" fn receive(me: EntityId, delivery: EntityId, from: EntityI
             set_script_value(
                 me,
                 ATTACK_SPEED_MOD_ID,
-                get_script_value(me, ATTACK_SPEED_MOD_ID, 1.) * 0.80,
+                (get_script_value(me, ATTACK_SPEED_MOD_ID, 1.) * 0.80).clamp(0.2, 1.),
             );
         }
         6 => {
@@ -45,7 +45,7 @@ pub unsafe extern "C" fn receive(me: EntityId, delivery: EntityId, from: EntityI
             set_script_value(
                 me,
                 DODGE_CHANCE_ID,
-                1. - ((1. - get_script_value(me, DODGE_CHANCE_ID, 0.)) * 0.8),
+                1. - ((1. - get_script_value(me, DODGE_CHANCE_ID, 0.)) * 0.8).clamp(0.25, 1.),
             );
         }
         _ => {}
