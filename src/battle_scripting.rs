@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use bevy_wasm_scripting::*;
+use rand::random;
 use wasmer::*;
 
 use crate::attacks::spawn_attack;
@@ -52,6 +53,7 @@ fn get_battle_imports_from_world<S: 'static + Send + Sync>(
             "get_y_of" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_y_of),
             "get_distance" => Function::new_typed_with_env(&mut wasmer_store.0, &env, get_distance),
 
+            "retreat" => Function::new_typed_with_env(&mut wasmer_store.0, &env, retreat),
             "move_towards" => Function::new_typed_with_env(&mut wasmer_store.0, &env, move_towards),
             "attack_enemy" => Function::new_typed_with_env(&mut wasmer_store.0, &env, attack_enemy::<S>),
         }
@@ -147,6 +149,12 @@ pub fn get_distance(env: FunctionEnvMut<WorldPointer>, me: EntityId, other: Enti
     }
 }
 
+pub fn retreat(env: FunctionEnvMut<WorldPointer>, me: EntityId, speed: f32) {
+    if let Some(mut troop) = env.data().write().get_mut::<Troop>(me.to_entity()) {
+        troop.target = Some((troop.staging_point.clone(), speed));
+    }
+}
+
 pub fn move_towards(env: FunctionEnvMut<WorldPointer>, me: EntityId, x: f32, y: f32, speed: f32) {
     if let Some(mut troop) = env.data().write().get_mut::<Troop>(me.to_entity()) {
         troop.target = Some((Vec2::new(x, y), speed));
@@ -159,6 +167,18 @@ pub fn attack_enemy<S: 'static + Send + Sync>(
     enemy: EntityId,
     attack_id: i32,
 ) -> f32 {
+    let dodge_chance = env
+        .data()
+        .read()
+        .get::<ScriptValues>(enemy.to_entity())
+        .and_then(|script_values| script_values.0.get(&DODGE_CHANCE_ID))
+        .cloned()
+        .unwrap_or(0.);
+    let attack_id = if random::<f32>() < dodge_chance {
+        -attack_id
+    } else {
+        attack_id
+    };
     if let (Some(attack_type), Some(sprites)) = (
         env.data()
             .read()

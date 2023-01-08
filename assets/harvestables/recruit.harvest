@@ -6,4 +6,6 @@ HarvestableType(
     seed_sprite_index: 5,
     value: -1,
     plant: false,
+    name: "Recruit",
+    description: "Recruits must receive further training before going to war",
 )

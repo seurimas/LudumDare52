@@ -13,6 +13,7 @@ use crate::{
     common_scripting::ScriptValues,
     delivery::*,
     harvest::spawn_harvest_spot,
+    helper::HelperTextBundle,
     loading::*,
     GameState,
 };
@@ -25,13 +26,18 @@ impl Plugin for BattlePlugin {
             .init_asset_loader::<TroopAssetLoader>()
             .add_asset::<AttackType>()
             .init_asset_loader::<AttackAssetLoader>()
-            .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(spawn_debug_enemy))
+            .add_system_set(SystemSet::on_enter(GameState::Playing).with_system(spawn_king))
             .add_system_set(
                 SystemSet::on_enter(GameState::Playing).with_system(spawn_player_staging_spot),
             )
             .add_system_set(SystemSet::on_update(GameState::Playing).with_system(
                 ScriptSystemWithCommands::<_, Troop>::wrap(IntoSystem::into_system(
                     troop_battle_action_system,
+                )),
+            ))
+            .add_system_set(SystemSet::on_update(GameState::Playing).with_system(
+                ScriptSystemWithCommands::<_, Troop>::wrap(IntoSystem::into_system(
+                    troop_death_system,
                 )),
             ))
             .add_system_set(
@@ -64,50 +70,66 @@ pub struct StagingBundle {
 
 #[derive(Component, Default)]
 pub struct StagingLocation {
-    pub staged: Vec<i32>,
+    pub staged: Vec<(i32, HashMap<i32, f32>)>,
 }
 
 impl StagingLocation {
     pub fn stage(&mut self, new_troop: i32) {
-        self.staged.push(new_troop);
+        self.staged.push((new_troop, HashMap::new()));
+    }
+    pub fn stage_with_buffs(&mut self, new_troop: i32, buffs: HashMap<i32, f32>) {
+        println!("Staging!");
+        self.staged.push((new_troop, buffs));
     }
 }
 
 fn spawn_player_staging_spot(
     mut commands: Commands,
+    fonts: Res<FontAssets>,
     textures: Res<TextureAssets>,
     scripts: Res<DeliveryScripts>,
 ) {
-    commands.spawn(StagingBundle {
-        sprite: SpriteSheetBundle {
-            texture_atlas: textures.locations.clone(),
-            sprite: TextureAtlasSprite {
-                index: 4,
+    let helper = commands
+        .spawn(HelperTextBundle::new(
+            "Staging Point - Drag trained troops to send them to fight!",
+            fonts.fira_sans.clone(),
+        ))
+        .id();
+    commands
+        .spawn(StagingBundle {
+            sprite: SpriteSheetBundle {
+                texture_atlas: textures.locations.clone(),
+                sprite: TextureAtlasSprite {
+                    index: 4,
+                    ..Default::default()
+                },
+                transform: Transform::from_translation(Vec3::new(256., 0., 1.)),
                 ..Default::default()
             },
-            transform: Transform::from_translation(Vec3::new(256., 0., 1.)),
-            ..Default::default()
-        },
-        faction: Faction::player(),
-        staging_location: Default::default(),
-        delivery_anchor: DeliveryAnchor::new(0., -16., 32., 32 * 32),
-        delivery_dropoff: DeliveryDropoff::new(scripts.staging.clone()),
-    });
+            faction: Faction::player(),
+            staging_location: Default::default(),
+            delivery_anchor: DeliveryAnchor::new(0., -16., 32., 32 * 32),
+            delivery_dropoff: DeliveryDropoff::new(scripts.staging.clone()),
+        })
+        .add_child(helper);
 }
 
-fn spawn_debug_enemy(
+fn spawn_king(
     mut commands: Commands,
     delivery_scripts: Res<DeliveryScripts>,
+    fonts: Res<FontAssets>,
     textures: Res<TextureAssets>,
     troop_types: Res<TroopTypes>,
 ) {
     spawn_troop(
         &mut commands,
-        Vec2::new(0., 300.),
+        Vec2::new(0., 0.),
+        fonts.fira_sans.clone(),
         textures.troops.clone(),
         delivery_scripts.deliver_troop_buffs.clone(),
-        troop_types.get(-1).unwrap(),
-        Faction::enemy(),
+        troop_types.get(87).unwrap(),
+        Faction::player(),
+        HashMap::default(),
     );
 }
 
@@ -115,6 +137,7 @@ fn spawn_debug_enemy(
 #[uuid = "57cde8f9-c5e6-4a79-988d-214c3ea1df8e"]
 pub struct TroopType {
     pub id: i32,
+    pub name: String,
     pub health: i32,
     pub sprite_index: usize,
     pub size: f32,
@@ -180,15 +203,17 @@ impl TroopTypes {
 pub struct Troop {
     pub troop_type: TroopType,
     pub health: i32,
+    pub staging_point: Vec2,
     pub target: Option<(Vec2, f32)>,
     pub seen_troops: Vec<Entity>,
 }
 
 impl Troop {
-    pub fn new(troop_type: TroopType) -> Self {
+    pub fn new(troop_type: TroopType, staging_point: Vec2) -> Self {
         Self {
             health: troop_type.health,
             troop_type,
+            staging_point,
             target: None,
             seen_troops: Vec::new(),
         }
@@ -244,10 +269,12 @@ pub struct TroopBundle {
 pub fn spawn_troop<'a, 'b, 'c>(
     commands: &'c mut Commands<'a, 'b>,
     position: Vec2,
+    helper_font: Handle<Font>,
     texture_atlas: Handle<TextureAtlas>,
     dropoff_script: Handle<WasmScript>,
     troop: TroopType,
     faction: Faction,
+    buffs: HashMap<i32, f32>,
 ) {
     let faction_indicator = commands
         .spawn(FactionIndicatorBundle {
@@ -264,6 +291,12 @@ pub fn spawn_troop<'a, 'b, 'c>(
             faction,
         })
         .id();
+    let helper = commands
+        .spawn(HelperTextBundle::new(
+            "If you're reading this, something has gone wrong",
+            helper_font,
+        ))
+        .id();
     commands
         .spawn(TroopBundle {
             sprite: SpriteSheetBundle {
@@ -276,14 +309,15 @@ pub fn spawn_troop<'a, 'b, 'c>(
                 ..Default::default()
             },
             faction,
-            troop: Troop::new(troop),
-            script_values: Default::default(),
+            troop: Troop::new(troop, position),
+            script_values: ScriptValues(buffs),
             delivery_dropoff: DeliveryDropoff {
                 script: dropoff_script.clone(),
             },
             delivery_anchor: DeliveryAnchor::new(0., 4., 8., 12 * 12),
         })
-        .add_child(faction_indicator);
+        .add_child(faction_indicator)
+        .add_child(helper);
 }
 
 fn troop_cooldown_system(
@@ -353,7 +387,11 @@ fn troop_battle_action_system(
         ) {
             Ok(cooldown) => {
                 if cooldown > 0. {
-                    commands.entity(entity).insert(TroopCooldown(cooldown));
+                    commands.add(move |world: &mut World| {
+                        if let Some(mut entity) = world.get_entity_mut(entity) {
+                            entity.insert(TroopCooldown(cooldown));
+                        }
+                    });
                 }
             }
             Err(err) => {
@@ -363,30 +401,61 @@ fn troop_battle_action_system(
     }
 }
 
+fn troop_death_system(
+    mut commands: Commands,
+    mut script_env: WasmScriptComponentEnv<Troop, ()>,
+    troops: Query<(Entity, &Troop)>,
+) {
+    for (entity, troop) in troops.iter() {
+        if troop.health <= 0 {
+            match script_env.call_if_instantiated_1::<f64, i8>(
+                troop.get_wasm_script_handle(),
+                "on_death",
+                EntityId::from_entity(entity),
+            ) {
+                Ok(dies) => {
+                    if dies == 1 {
+                        commands.entity(entity).despawn_recursive();
+                    }
+                }
+                Err(err) => {
+                    error!("Could not execute on_death: {}", err);
+                }
+            }
+        }
+    }
+}
+
 fn troop_staging_system(
     mut staging_locations: Query<(&GlobalTransform, &Faction, &mut StagingLocation)>,
     mut commands: Commands,
     delivery_scripts: Res<DeliveryScripts>,
+    fonts: Res<FontAssets>,
     textures: Res<TextureAssets>,
     troop_types: Res<TroopTypes>,
 ) {
     for (transform, faction, mut staging_location) in staging_locations.iter_mut() {
-        staging_location.staged.drain(..).for_each(|troop_type| {
-            if let Some(troop_type) = troop_types.get(troop_type) {
-                let position = Vec2::new(transform.translation().x, transform.translation().y)
-                    + Vec2::new(
-                        32. - rand::random::<f32>() * 64.,
-                        32. - rand::random::<f32>() * 64.,
+        staging_location
+            .staged
+            .drain(..)
+            .for_each(|(troop_type, buffs)| {
+                if let Some(troop_type) = troop_types.get(troop_type) {
+                    let position = Vec2::new(transform.translation().x, transform.translation().y)
+                        + Vec2::new(
+                            32. - rand::random::<f32>() * 64.,
+                            32. - rand::random::<f32>() * 64.,
+                        );
+                    spawn_troop(
+                        &mut commands,
+                        position,
+                        fonts.fira_sans.clone(),
+                        textures.troops.clone(),
+                        delivery_scripts.deliver_troop_buffs.clone(),
+                        troop_type,
+                        *faction,
+                        buffs,
                     );
-                spawn_troop(
-                    &mut commands,
-                    position,
-                    textures.troops.clone(),
-                    delivery_scripts.deliver_troop_buffs.clone(),
-                    troop_type,
-                    *faction,
-                );
-            }
-        });
+                }
+            });
     }
 }

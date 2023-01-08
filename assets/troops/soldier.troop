@@ -1,6 +1,7 @@
 #![enable(implicit_some)]
 TroopType(
     id: 0,
+    name: "Soldier",
     sprite_index: 0,
     health: 5,
     size: 16.,

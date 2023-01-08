@@ -5,6 +5,11 @@ use troop_imports::*;
 
 #[no_mangle]
 pub unsafe extern "C" fn battle_action(me: EntityId) -> f32 {
-    move_towards(me, 32., 32., 32.);
-    3.
+    retreat(me, 500.);
+    0.01
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn on_death(me: EntityId) -> Bool {
+    Bool::r#true()
 }

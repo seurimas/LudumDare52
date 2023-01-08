@@ -2,6 +2,7 @@ use crate::{
     attacks::{AttackType, AttackTypes},
     battle::{TroopType, TroopTypes},
     harvest::{Harvestable, HarvestableType, HarvestableTypes},
+    wave::{Wave, Waves},
     GameState,
 };
 use bevy::prelude::*;
@@ -25,7 +26,9 @@ impl Plugin for LoadingPlugin {
                 .with_collection::<HarvestableAssets>()
                 .with_collection::<AttackAssets>()
                 .with_collection::<TroopAssets>()
+                .with_collection::<WaveAssets>()
                 .init_resource::<HarvestableTypes>()
+                .init_resource::<Waves>()
                 .init_resource::<TroopTypes>()
                 .init_resource::<AttackTypes>()
                 .continue_to_state(GameState::Menu),
@@ -100,6 +103,20 @@ pub struct HarvestableAssets {
 }
 
 #[derive(AssetCollection, Resource)]
+pub struct WaveAssets {
+    #[asset(
+        paths(
+            "waves/wave0.wave",
+            "waves/wave1.wave",
+            "waves/wave2.wave",
+            "waves/wave3.wave",
+        ),
+        collection(typed)
+    )]
+    pub waves: Vec<Handle<Wave>>,
+}
+
+#[derive(AssetCollection, Resource)]
 pub struct AttackAssets {
     #[asset(
         paths("attacks/slash.attack", "attacks/arrow.attack",),
@@ -111,7 +128,7 @@ pub struct AttackAssets {
 #[derive(AssetCollection, Resource)]
 pub struct TroopAssets {
     #[asset(
-        paths("troops/archer.troop", "troops/soldier.troop", "troops/enemy.troop",),
+        paths("troops/archer.troop", "troops/soldier.troop", "troops/king.troop",),
         collection(typed)
     )]
     pub troops: Vec<Handle<TroopType>>,

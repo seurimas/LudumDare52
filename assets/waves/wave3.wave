@@ -1,0 +1,7 @@
+Wave(
+    id: 3,
+    north: [],
+    east: [(-1, {})],
+    south: [],
+    west: [(-1, {})],
+)

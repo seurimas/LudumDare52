@@ -121,7 +121,9 @@ fn delivery_dragging_system(
             source: _,
         } => {
             if parents.get(delivered).is_ok() {
-                commands.entity(delivered).remove_parent();
+                if let Some(mut delivered) = commands.get_entity(delivered) {
+                    delivered.remove_parent();
+                }
             } else {
                 if let Ok((mut visibility, mut transform)) = transforms.get_mut(delivered) {
                     *visibility = Visibility::VISIBLE;

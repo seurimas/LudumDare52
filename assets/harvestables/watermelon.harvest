@@ -1,0 +1,11 @@
+#![enable(implicit_some)]
+HarvestableType(
+    id: 7,
+    base_harvest_time: 12.,
+    sprite_index: 12,
+    seed_sprite_index: 13,
+    value: 4,
+    plant: true,
+    name: "Watermelon",
+    description: "Pears increase dodge rate",
+)

@@ -10,7 +10,8 @@ use bevy_wasm_scripting::WasmScript;
 use crate::{
     common_scripting::ScriptValues,
     delivery::{DeliveryAnchor, DeliveryDropoff, DeliverySource},
-    loading::{DeliveryScripts, HarvestableAssets, TextureAssets},
+    helper::HelperTextBundle,
+    loading::{DeliveryScripts, FontAssets, HarvestableAssets, TextureAssets},
     GameState,
 };
 
@@ -47,8 +48,8 @@ pub struct HarvestSpot {
 
 impl HarvestSpot {
     pub fn set_harvestable(&mut self, harvestable_type: Option<HarvestableType>) {
-        self.harvestable_type = harvestable_type;
-        if let Some(harvestable_type) = harvestable_type {
+        self.harvestable_type = harvestable_type.clone();
+        if let Some(harvestable_type) = harvestable_type.as_ref() {
             self.progress = 0.;
             self.harvestable_entity = None;
             self.harvest_time = harvestable_type.base_harvest_time;
@@ -56,9 +57,13 @@ impl HarvestSpot {
             self.progress = 0.;
         }
     }
+
+    pub fn progress_percent(&self) -> i32 {
+        (((self.progress / self.harvest_time) * 100.) as i32).clamp(0, 100)
+    }
 }
 
-#[derive(Clone, Copy, Deserialize, TypeUuid)]
+#[derive(Clone, Deserialize, TypeUuid)]
 #[uuid = "a8e2ef38-b4e3-4468-b936-c397ee9b7afb"]
 pub struct HarvestableType {
     pub id: i32,
@@ -68,6 +73,8 @@ pub struct HarvestableType {
     pub value: i32,
     pub plant: bool,
     pub troop_id: Option<i32>,
+    pub name: String,
+    pub description: String,
 }
 
 #[derive(Default)]
@@ -135,34 +142,47 @@ pub struct HarvestSpotBundle {
 pub fn spawn_harvest_spot<'a, 'b, 'c>(
     commands: &'c mut Commands<'a, 'b>,
     position: Vec2,
+    helper_font: Handle<Font>,
     texture_atlas: Handle<TextureAtlas>,
     script: Handle<WasmScript>,
-) -> EntityCommands<'a, 'b, 'c> {
-    commands.spawn(HarvestSpotBundle {
-        sprite: SpriteSheetBundle {
-            texture_atlas,
-            sprite: TextureAtlasSprite {
-                index: 0,
+    visibility: Visibility,
+) -> Entity {
+    let helper = commands
+        .spawn(HelperTextBundle::new(
+            "If you're seeing this, something is wrong.",
+            helper_font,
+        ))
+        .id();
+    commands
+        .spawn(HarvestSpotBundle {
+            sprite: SpriteSheetBundle {
+                texture_atlas,
+                sprite: TextureAtlasSprite {
+                    index: 0,
+                    ..Default::default()
+                },
+                transform: Transform::from_translation(Vec3::new(position.x, position.y, 1.)),
+                visibility,
                 ..Default::default()
             },
-            transform: Transform::from_translation(Vec3::new(position.x, position.y, 1.)),
-            ..Default::default()
-        },
-        harvest_spot: HarvestSpot {
-            harvestable_type: None,
-            harvestable_entity: None,
-            progress: 0.,
-            harvest_time: 0.,
-        },
-        delivery_anchor: DeliveryAnchor::new(0., -8., 16., 16 * 16),
-        delivery_source: DeliverySource::new(script.clone()),
-        delivery_location: DeliveryDropoff::new(script),
-        script_values: Default::default(),
-    })
+            harvest_spot: HarvestSpot {
+                harvestable_type: None,
+                harvestable_entity: None,
+                progress: 0.,
+                harvest_time: 0.,
+            },
+            delivery_anchor: DeliveryAnchor::new(0., -8., 16., 16 * 16),
+            delivery_source: DeliverySource::new(script.clone()),
+            delivery_location: DeliveryDropoff::new(script),
+            script_values: Default::default(),
+        })
+        .add_child(helper)
+        .id()
 }
 
 fn spawn_harvest_spots(
     mut commands: Commands,
+    fonts: Res<FontAssets>,
     textures: Res<TextureAssets>,
     scripts: Res<DeliveryScripts>,
 ) {
@@ -171,8 +191,10 @@ fn spawn_harvest_spots(
             spawn_harvest_spot(
                 &mut commands,
                 Vec2::new(x as f32 * 32., y as f32 * 32.),
+                fonts.fira_sans.clone(),
                 textures.harvest_base.clone(),
                 scripts.field_spot.clone(),
+                Visibility::VISIBLE,
             );
         }
     }
@@ -228,7 +250,7 @@ fn harvestable_growth_system(
                     sprite: SpriteSheetBundle {
                         texture_atlas: textures.harvestables.clone(),
                         sprite: TextureAtlasSprite {
-                            index: spot.harvestable_type.unwrap().sprite_index,
+                            index: spot.harvestable_type.as_ref().unwrap().sprite_index,
                             ..Default::default()
                         },
                         transform: Transform::from_translation(Vec3::new(0., 0., 10.)),

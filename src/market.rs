@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{delivery::*, loading::*, GameState};
+use crate::{delivery::*, helper::HelperTextBundle, loading::*, GameState};
 
 pub struct MarketPlugin;
 
@@ -20,21 +20,30 @@ pub struct MarketBundle {
 
 fn spawn_market(
     mut commands: Commands,
+    fonts: Res<FontAssets>,
     textures: Res<TextureAssets>,
     scripts: Res<DeliveryScripts>,
 ) {
-    commands.spawn(MarketBundle {
-        sprite: SpriteSheetBundle {
-            texture_atlas: textures.locations.clone(),
-            sprite: TextureAtlasSprite {
-                index: 0,
+    let helper = commands
+        .spawn(HelperTextBundle::new(
+            "Marketplace - Drag seeds to nearby plots to grow food for soldiers",
+            fonts.fira_sans.clone(),
+        ))
+        .id();
+    commands
+        .spawn(MarketBundle {
+            sprite: SpriteSheetBundle {
+                texture_atlas: textures.locations.clone(),
+                sprite: TextureAtlasSprite {
+                    index: 0,
+                    ..Default::default()
+                },
+                transform: Transform::from_translation(Vec3::new(128., 0., 1.)),
                 ..Default::default()
             },
-            transform: Transform::from_translation(Vec3::new(128., 0., 1.)),
-            ..Default::default()
-        },
-        delivery_anchor: DeliveryAnchor::new(0., -16., 32., 32 * 32),
-        delivery_source: DeliverySource::new(scripts.market.clone()),
-        delivery_location: DeliveryDropoff::new(scripts.market.clone()),
-    });
+            delivery_anchor: DeliveryAnchor::new(0., -16., 32., 32 * 32),
+            delivery_source: DeliverySource::new(scripts.market.clone()),
+            delivery_location: DeliveryDropoff::new(scripts.market.clone()),
+        })
+        .add_child(helper);
 }

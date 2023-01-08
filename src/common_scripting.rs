@@ -9,6 +9,11 @@ use crate::{
     loading::*,
 };
 
+pub const SPEED_MOD_ID: i32 = 0;
+pub const ATTACK_SPEED_MOD_ID: i32 = 1;
+pub const ATTACK_RANGE_MOD_ID: i32 = 2;
+pub const DODGE_CHANCE_ID: i32 = 3;
+
 #[derive(Component, Default)]
 pub struct ScriptValues(pub HashMap<i32, f32>);
 
@@ -60,10 +65,9 @@ pub fn despawn_entity<S: 'static + Send + Sync>(
     env: FunctionEnvMut<WorldPointer>,
     entity_id: EntityId,
 ) {
-    env.data()
-        .commands::<S>()
-        .entity(entity_id.to_entity())
-        .despawn();
+    if let Some(mut entity) = env.data().commands::<S>().get_entity(entity_id.to_entity()) {
+        entity.despawn();
+    }
 }
 
 pub fn attach_child<S: 'static + Send + Sync>(
@@ -71,10 +75,9 @@ pub fn attach_child<S: 'static + Send + Sync>(
     me: EntityId,
     child: EntityId,
 ) {
-    env.data()
-        .commands::<S>()
-        .entity(me.to_entity())
-        .add_child(child.to_entity());
+    if let Some(mut entity) = env.data().commands::<S>().get_entity(me.to_entity()) {
+        entity.add_child(child.to_entity());
+    }
 }
 
 pub fn spawn_harvestable_by_id<S: 'static + Send + Sync>(

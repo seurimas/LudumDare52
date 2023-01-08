@@ -8,5 +8,5 @@
 
 ./compile_rust.sh deliver_troop_buffs
 ./compile_rust.sh troop_archer
-./compile_rust.sh troop_enemy
 ./compile_rust.sh troop_soldier
+./compile_rust.sh troop_king

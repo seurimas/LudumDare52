@@ -6,4 +6,6 @@ HarvestableType(
     value: -1,
     plant: false,
     troop_id: 0,
+    name: "Soldier",
+    description: "Soldiers attack with swords",
 )

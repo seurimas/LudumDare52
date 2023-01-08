@@ -1,8 +1,9 @@
 #![enable(implicit_some)]
 TroopType(
-    id: -1,
+    id: 87,
+    name: "King",
     sprite_index: 0,
     health: 3,
     size: 16.,
-    script_path: "scripts/troop_enemy.wasm",
+    script_path: "scripts/troop_king.wasm",
 )

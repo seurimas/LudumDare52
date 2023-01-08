@@ -6,4 +6,6 @@ HarvestableType(
     seed_sprite_index: 1,
     value: 1,
     plant: true,
+    name: "Red berries",
+    description: "Red berries are renowned for their healing properties",
 )

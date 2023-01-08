@@ -1,0 +1,11 @@
+#![enable(implicit_some)]
+HarvestableType(
+    id: 2,
+    base_harvest_time: 12.,
+    sprite_index: 8,
+    seed_sprite_index: 9,
+    value: 4,
+    plant: true,
+    name: "Lemon",
+    description: "Lemons increase attack speed",
+)

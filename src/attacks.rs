@@ -131,7 +131,9 @@ pub fn attack_phase_system(
     for (entity, mut attack, sprite, transform, visibility) in attacks.iter_mut() {
         let target = troops.get_mut(attack.target);
         if target.is_err() {
-            commands.entity(entity).despawn();
+            if let Some(mut entity) = commands.get_entity(entity) {
+                entity.despawn();
+            }
         }
     }
     for (entity, mut attack, mut sprite, mut transform, mut visibility) in attacks.iter_mut() {
@@ -222,7 +224,9 @@ pub fn attack_phase_system(
                     }
                 }
             } else {
-                commands.entity(entity).despawn();
+                if let Some(mut entity) = commands.get_entity(entity) {
+                    entity.despawn();
+                }
             }
         }
     }
