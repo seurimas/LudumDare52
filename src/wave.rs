@@ -51,7 +51,7 @@ impl Wave {
         let troop_value = troops as f32 * 5.;
         let modifier = (self.id + 1) as f32 * 10.;
         let time_loss = time * 2.;
-        troop_value + modifier + time_loss
+        troop_value + modifier - time_loss
     }
 }
 
@@ -291,7 +291,7 @@ fn wave_describe_system(
         *wave_text.single_mut() = Text::from_sections([
             TextSection::new("Welcome!\n", main_style),
             TextSection::new(
-                "The first wave will spawn when you have deployed a troop.",
+                "The first wave will spawn soon!\nRecruit, train, and deploy your troops!\nFeed them to give them buffs!",
                 TextStyle {
                     color: Color::WHITE,
                     font: fonts.fira_sans.clone(),

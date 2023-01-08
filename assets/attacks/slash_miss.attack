@@ -4,10 +4,7 @@ AttackType(
     cooldown: 1.,
     phases: [
         PickSound (
-            options: [0,1,2,3,4],
-        ),
-        Damage (
-            amount: 1,
+            options: [10, 11],
         ),
         Overlay (
             sprite_index: 1,

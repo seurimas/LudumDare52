@@ -109,7 +109,7 @@ fn spawn_player_staging_spot(
                 },
                 faction: Faction::player(),
                 staging_location: Default::default(),
-                delivery_anchor: DeliveryAnchor::new(0., -16., 32., 32 * 32),
+                delivery_anchor: DeliveryAnchor::new(0., -16., 32., 64 * 64),
                 delivery_dropoff: DeliveryDropoff::new(scripts.staging.clone()),
             })
             .add_child(helper);
@@ -128,7 +128,7 @@ fn spawn_king(
         Vec2::new(0., 0.),
         fonts.fira_sans.clone(),
         textures.troops.clone(),
-        delivery_scripts.deliver_troop_buffs.clone(),
+        delivery_scripts.deliver_king.clone(),
         troop_types.get(87).unwrap(),
         Faction::player(),
         HashMap::default(),
@@ -324,7 +324,7 @@ pub fn spawn_troop<'a, 'b, 'c>(
             delivery_dropoff: DeliveryDropoff {
                 script: dropoff_script.clone(),
             },
-            delivery_anchor: DeliveryAnchor::new(0., 4., 8., 12 * 12),
+            delivery_anchor: DeliveryAnchor::new(0., -4., 8., 20 * 20),
         })
         .add_child(faction_indicator)
         .add_child(helper);
@@ -460,7 +460,11 @@ fn troop_staging_system(
                         position,
                         fonts.fira_sans.clone(),
                         textures.troops.clone(),
-                        delivery_scripts.deliver_troop_buffs.clone(),
+                        if faction.faction_id == Faction::player().faction_id {
+                            delivery_scripts.deliver_troop_buffs.clone()
+                        } else {
+                            delivery_scripts.deliver_enemy.clone()
+                        },
                         troop_type,
                         *faction,
                         buffs,

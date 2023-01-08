@@ -10,7 +10,7 @@ pub unsafe extern "C" fn can_produce(me: EntityId) -> Bool {
 
 #[no_mangle]
 pub unsafe extern "C" fn produce(me: EntityId) -> EntityId {
-    let harvestable_id = if get_random() > 0.5 {
+    let harvestable_id = if get_random() > 0.75 {
         0
     } else {
         if get_random() < 0.3333 {

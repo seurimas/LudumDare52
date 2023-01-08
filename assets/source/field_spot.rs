@@ -21,7 +21,9 @@ pub unsafe extern "C" fn produce(me: EntityId) -> EntityId {
 
 #[no_mangle]
 pub unsafe extern "C" fn can_receive(me: EntityId, delivery: EntityId) -> Bool {
-    if get_harvestable_is_plant(delivery) == Bool::r#true() {
+    if !get_harvest_spot_harvestable(me).is_missing() {
+        Bool::r#false()
+    } else if get_harvestable_is_plant(delivery) == Bool::r#true() {
         (get_harvestable_is_real(delivery) == Bool::r#false()).into()
     } else {
         Bool::r#false()

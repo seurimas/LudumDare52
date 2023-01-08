@@ -101,7 +101,7 @@ pub fn helper_text_system(
             let distance_to_cursor = txy.distance_squared(mouse_world_location) as i32;
             if distance_to_cursor < text.max_distance_squared {
                 *visibility = Visibility::VISIBLE;
-                text_transform.translation = Vec3::new(-size.size.x / 2., 48., 1.);
+                text_transform.translation = Vec3::new(-size.size.x / 2., 48., 100.);
             }
         }
     }
@@ -144,33 +144,33 @@ pub fn helper_troop_system(
             if let Some(speed_buff) = script_values.0.get(&SPEED_MOD_ID) {
                 let speed_buff_count = ((speed_buff - 1.) / 0.1) as i32;
                 description.push(TextSection::new(
-                    format!(" SP{} ", speed_buff_count),
+                    format!("MOV {}\n", speed_buff_count),
                     TextStyle {
                         color: Color::BLUE,
                         font: fonts.fira_sans.clone(),
-                        font_size: 10.,
+                        font_size: 14.,
                     },
                 ));
             }
             if let Some(speed_buff) = script_values.0.get(&ATTACK_SPEED_MOD_ID) {
                 let speed_buff_count = ((1. - speed_buff) / 0.1) as i32;
                 description.push(TextSection::new(
-                    format!(" ATK{} ", speed_buff_count),
+                    format!("ATK {}\n", speed_buff_count),
                     TextStyle {
                         color: Color::BLUE,
                         font: fonts.fira_sans.clone(),
-                        font_size: 10.,
+                        font_size: 14.,
                     },
                 ));
             }
             if let Some(dodge_chance) = script_values.0.get(&DODGE_CHANCE_ID) {
                 let dodge_chance_count = (dodge_chance / 0.05) as i32;
                 description.push(TextSection::new(
-                    format!("\n DODGE{} ", dodge_chance_count),
+                    format!("DODGE {}", dodge_chance_count),
                     TextStyle {
                         color: Color::BLUE,
                         font: fonts.fira_sans.clone(),
-                        font_size: 10.,
+                        font_size: 14.,
                     },
                 ));
             }
@@ -192,7 +192,7 @@ pub fn helper_harvest_system(
                     TextStyle {
                         color: Color::WHITE,
                         font: fonts.fira_sans.clone(),
-                        font_size: 12.,
+                        font_size: 14.,
                     },
                 )
             } else if harvest_spot.progress_percent() < 100 {
@@ -203,9 +203,9 @@ pub fn helper_harvest_system(
                         harvest_spot.progress_percent()
                     ),
                     TextStyle {
-                        color: Color::GRAY,
+                        color: Color::WHITE,
                         font: fonts.fira_sans.clone(),
-                        font_size: 12.,
+                        font_size: 18.,
                     },
                 )
             } else {
@@ -217,7 +217,7 @@ pub fn helper_harvest_system(
                     TextStyle {
                         color: Color::WHITE,
                         font: fonts.fira_sans.clone(),
-                        font_size: 12.,
+                        font_size: 18.,
                     },
                 )
             }];
@@ -227,18 +227,7 @@ pub fn helper_harvest_system(
                     TextStyle {
                         color: Color::BLUE,
                         font: fonts.fira_sans.clone(),
-                        font_size: 10.,
-                    },
-                ));
-            }
-            if let Some(dodge_chance) = script_values.0.get(&DODGE_CHANCE_ID) {
-                let dodge_chance_count = (dodge_chance / 0.05) as i32;
-                description.push(TextSection::new(
-                    format!("\n DODGE{} ", dodge_chance_count),
-                    TextStyle {
-                        color: Color::BLUE,
-                        font: fonts.fira_sans.clone(),
-                        font_size: 10.,
+                        font_size: 16.,
                     },
                 ));
             }

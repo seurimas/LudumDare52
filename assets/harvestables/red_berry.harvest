@@ -1,11 +1,11 @@
 #![enable(implicit_some)]
 HarvestableType(
     id: 0,
-    base_harvest_time: 6.,
+    base_harvest_time: 2.,
     sprite_index: 0,
     seed_sprite_index: 1,
     value: 1,
     plant: true,
     name: "Red berries",
-    description: "Red berries are renowned for their healing properties",
+    description: "Feed to heal troops",
 )

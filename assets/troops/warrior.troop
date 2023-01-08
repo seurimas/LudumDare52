@@ -1,0 +1,9 @@
+#![enable(implicit_some)]
+TroopType(
+    id: 2,
+    name: "Warrior",
+    sprite_index: 2,
+    health: 20,
+    size: 16.,
+    script_path: "scripts/troop_warrior.wasm",
+)

@@ -1,14 +1,14 @@
 #![enable(implicit_some)]
 AttackType(
-    id: -2,
-    cooldown: 2.,
+    id: -3,
+    cooldown: 4.,
     phases: [
         PickSound (
             options: [5,6,7,8,9],
         ),
         Projectile (
             sprite_index: 0,
-            speed: 128.,
+            speed: 256.,
         ),
         PickSound (
             options: [10, 11],

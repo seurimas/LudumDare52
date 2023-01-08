@@ -1,11 +1,11 @@
 #![enable(implicit_some)]
 HarvestableType(
     id: 6,
-    base_harvest_time: 12.,
+    base_harvest_time: 8.,
     sprite_index: 10,
     seed_sprite_index: 11,
     value: 4,
     plant: true,
     name: "Pear",
-    description: "Pears increase dodge rate",
+    description: "Feed to increase dodge rate",
 )

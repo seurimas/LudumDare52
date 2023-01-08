@@ -1,7 +1,7 @@
 #![enable(implicit_some)]
 HarvestableType(
     id: 1,
-    base_harvest_time: 12.,
+    base_harvest_time: 4.,
     sprite_index: 2,
     seed_sprite_index: 3,
     value: 4,

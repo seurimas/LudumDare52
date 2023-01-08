@@ -85,6 +85,10 @@ pub struct DeliveryScripts {
     pub staging: Handle<WasmScript>,
     #[asset(path = "scripts/deliver_troop_buffs.wasm")]
     pub deliver_troop_buffs: Handle<WasmScript>,
+    #[asset(path = "scripts/deliver_enemy.wasm")]
+    pub deliver_enemy: Handle<WasmScript>,
+    #[asset(path = "scripts/deliver_king.wasm")]
+    pub deliver_king: Handle<WasmScript>,
 }
 
 #[derive(AssetCollection, Resource)]
@@ -112,6 +116,12 @@ pub struct WaveAssets {
             "waves/wave1.wave",
             "waves/wave2.wave",
             "waves/wave3.wave",
+            "waves/wave4.wave",
+            "waves/wave5.wave",
+            "waves/wave6.wave",
+            "waves/wave7.wave",
+            "waves/wave8.wave",
+            "waves/wave9.wave",
         ),
         collection(typed)
     )]
@@ -121,7 +131,14 @@ pub struct WaveAssets {
 #[derive(AssetCollection, Resource)]
 pub struct AttackAssets {
     #[asset(
-        paths("attacks/slash.attack", "attacks/arrow.attack",),
+        paths(
+            "attacks/slash.attack",
+            "attacks/slash_miss.attack",
+            "attacks/arrow.attack",
+            "attacks/arrow_miss.attack",
+            "attacks/ranger_arrow.attack",
+            "attacks/ranger_arrow_miss.attack",
+        ),
         collection(typed)
     )]
     pub attacks: Vec<Handle<AttackType>>,
@@ -130,7 +147,13 @@ pub struct AttackAssets {
 #[derive(AssetCollection, Resource)]
 pub struct TroopAssets {
     #[asset(
-        paths("troops/archer.troop", "troops/soldier.troop", "troops/king.troop",),
+        paths(
+            "troops/archer.troop",
+            "troops/soldier.troop",
+            "troops/ranger.troop",
+            "troops/warrior.troop",
+            "troops/king.troop",
+        ),
         collection(typed)
     )]
     pub troops: Vec<Handle<TroopType>>,

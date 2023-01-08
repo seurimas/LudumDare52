@@ -4,7 +4,7 @@ AttackType(
     cooldown: 1.,
     phases: [
         PickSound (
-            options: [0,1,2,3,4],
+            options: [0,1],
         ),
         Damage (
             amount: 1,
