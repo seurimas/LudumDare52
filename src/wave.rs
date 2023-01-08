@@ -7,10 +7,10 @@ use bevy::{
 use serde::Deserialize;
 
 use crate::{
-    battle::{Faction, StagingLocation, Troop},
+    battle::{Faction, StagingLocation, Troop, TroopCooldown},
     helper::HelperTextBundle,
     loading::{FontAssets, TextureAssets, WaveAssets},
-    GameState,
+    GameState, SafeInsert,
 };
 
 pub struct WavePlugin;
@@ -25,6 +25,8 @@ impl Plugin for WavePlugin {
             .add_system_set(
                 SystemSet::on_update(GameState::Playing).with_system(wave_describe_system),
             )
+            .add_system_set(SystemSet::on_update(GameState::Playing).with_system(restart_game))
+            .add_system_set(SystemSet::on_update(GameState::Playing).with_system(game_over_system))
             .add_system_set(
                 SystemSet::on_update(GameState::Playing).with_system(wave_spawning_system),
             )
@@ -41,6 +43,16 @@ pub struct Wave {
     pub east: Vec<(i32, HashMap<i32, f32>)>,
     pub south: Vec<(i32, HashMap<i32, f32>)>,
     pub west: Vec<(i32, HashMap<i32, f32>)>,
+}
+
+impl Wave {
+    pub fn score(&self, time: f32) -> f32 {
+        let troops = self.north.len() + self.east.len() + self.south.len() + self.west.len();
+        let troop_value = troops as f32 * 5.;
+        let modifier = (self.id + 1) as f32 * 10.;
+        let time_loss = time * 2.;
+        troop_value + modifier + time_loss
+    }
 }
 
 #[derive(Default)]
@@ -144,7 +156,18 @@ impl Default for CurrentWave {
 }
 
 impl CurrentWave {
+    pub fn game_over(&mut self) {
+        self.wave = Wave {
+            id: -2,
+            north: vec![],
+            east: vec![],
+            south: vec![],
+            west: vec![],
+        };
+        self.time_in_wave = -60.;
+    }
     pub fn go_to_next_wave(&mut self, wave: Wave) {
+        self.score = self.score + wave.score(self.time_in_wave);
         self.wave = wave;
         self.time_in_wave = -15.;
         self.spawned = 0;
@@ -211,6 +234,7 @@ fn setup_wave_ui(mut commands: Commands, fonts: Res<FontAssets>) {
                 color: Color::WHITE,
             },
         )
+        .with_text_alignment(TextAlignment::TOP_CENTER)
         .with_style(Style {
             position_type: PositionType::Relative,
             position: UiRect {
@@ -222,6 +246,23 @@ fn setup_wave_ui(mut commands: Commands, fonts: Res<FontAssets>) {
         }),
         WaveText,
     ));
+}
+
+fn restart_game(
+    mut current_wave: ResMut<CurrentWave>,
+    mut state: ResMut<State<GameState>>,
+    input: Res<Input<KeyCode>>,
+) {
+    if current_wave.wave.id <= -2 && input.just_pressed(KeyCode::Escape) {
+        current_wave.go_to_next_wave(Wave {
+            id: -1,
+            north: vec![],
+            east: vec![],
+            south: vec![],
+            west: vec![],
+        });
+        state.set(GameState::Menu);
+    }
 }
 
 fn wave_describe_system(
@@ -246,9 +287,97 @@ fn wave_describe_system(
                 },
             ),
         ]);
-    } else {
-        *wave_text.single_mut() = Text::from_section("Welcome!", main_style);
+    } else if current_wave.wave.id == -1 {
+        *wave_text.single_mut() = Text::from_sections([
+            TextSection::new("Welcome!\n", main_style),
+            TextSection::new(
+                "The first wave will spawn when you have deployed a troop.",
+                TextStyle {
+                    color: Color::WHITE,
+                    font: fonts.fira_sans.clone(),
+                    font_size: 18.,
+                },
+            ),
+        ]);
+    } else if current_wave.wave.id == -2 {
+        *wave_text.single_mut() = Text::from_sections([
+            TextSection::new("Game Over!\n", main_style),
+            TextSection::new(
+                "Your king has died...\n",
+                TextStyle {
+                    color: Color::RED,
+                    font: fonts.fira_sans.clone(),
+                    font_size: 18.,
+                },
+            ),
+            TextSection::new(
+                format!("You achieved a score of {}\n", current_wave.score),
+                TextStyle {
+                    color: Color::YELLOW,
+                    font: fonts.fira_sans.clone(),
+                    font_size: 18.,
+                },
+            ),
+            TextSection::new(
+                "Press ESC to return to the main menu.\n",
+                TextStyle {
+                    color: Color::YELLOW,
+                    font: fonts.fira_sans.clone(),
+                    font_size: 18.,
+                },
+            ),
+        ]);
+    } else if current_wave.wave.id == -3 {
+        *wave_text.single_mut() = Text::from_sections([
+            TextSection::new("Game Over!\n", main_style),
+            TextSection::new(
+                "You have fended off the invaders!\n",
+                TextStyle {
+                    color: Color::GREEN,
+                    font: fonts.fira_sans.clone(),
+                    font_size: 24.,
+                },
+            ),
+            TextSection::new(
+                format!("You achieved a score of {}\n", current_wave.score),
+                TextStyle {
+                    color: Color::YELLOW,
+                    font: fonts.fira_sans.clone(),
+                    font_size: 18.,
+                },
+            ),
+            TextSection::new(
+                "Press ESC to return to the main menu.\n",
+                TextStyle {
+                    color: Color::YELLOW,
+                    font: fonts.fira_sans.clone(),
+                    font_size: 18.,
+                },
+            ),
+        ]);
     }
+}
+
+fn game_over_system(
+    mut current_wave: ResMut<CurrentWave>,
+    mut commands: Commands,
+    troops: Query<(Entity, &Troop, &Faction)>,
+) {
+    if current_wave.wave.id < 0 {
+        // Pre-initialized state?
+        return;
+    }
+    for (entity, troop, faction) in troops.iter() {
+        if troop.troop_type.id == 87 {
+            return;
+        }
+    }
+    for (entity, _troop, faction) in troops.iter() {
+        if faction.faction_id == Faction::player().faction_id {
+            commands.add(SafeInsert::new(entity, TroopCooldown(999.)));
+        }
+    }
+    current_wave.game_over();
 }
 
 fn wave_ending_system(
@@ -262,7 +391,17 @@ fn wave_ending_system(
             .any(|(_troop, faction)| faction.faction_id == Faction::enemy().faction_id)
         {
             let next_wave = waves.get(current_wave.wave.id + 1);
-            current_wave.go_to_next_wave(next_wave);
+            if next_wave.id == -1 {
+                current_wave.go_to_next_wave(Wave {
+                    id: -3,
+                    north: vec![],
+                    east: vec![],
+                    south: vec![],
+                    west: vec![],
+                })
+            } else {
+                current_wave.go_to_next_wave(next_wave);
+            }
         }
     }
 }

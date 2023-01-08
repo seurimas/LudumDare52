@@ -6,8 +6,8 @@ use troop_imports::*;
 #[no_mangle]
 pub unsafe extern "C" fn battle_action(me: EntityId) -> f32 {
     let nearest_enemy = get_nearest_enemy(me);
+    scan_enemies(me);
     if nearest_enemy.is_missing() {
-        scan_enemies(me);
         retreat(me, 32. * get_script_value(me, SPEED_MOD_ID, 1.0));
         0.0001
     } else {

@@ -52,7 +52,7 @@ fn spawn_recruitment(
                     index: 1,
                     ..Default::default()
                 },
-                transform: Transform::from_translation(Vec3::new(-128., 0., 1.)),
+                transform: Transform::from_translation(Vec3::new(-64., 0., 1.)),
                 ..Default::default()
             },
             delivery_anchor: DeliveryAnchor::new(0., -16., 32., 32 * 32),
@@ -105,7 +105,7 @@ fn spawn_training_ground(
                     index: 2,
                     ..Default::default()
                 },
-                transform: Transform::from_translation(Vec3::new(-128., 128., 1.)),
+                transform: Transform::from_translation(Vec3::new(-64., 64., 1.)),
                 ..Default::default()
             },
             delivery_anchor: DeliveryAnchor::new(0., -16., 32., 32 * 32),
@@ -161,7 +161,7 @@ fn spawn_archery_field(
                     index: 3,
                     ..Default::default()
                 },
-                transform: Transform::from_translation(Vec3::new(-128., -128., 1.)),
+                transform: Transform::from_translation(Vec3::new(-64., -64., 1.)),
                 ..Default::default()
             },
             delivery_anchor: DeliveryAnchor::new(0., -16., 32., 32 * 32),

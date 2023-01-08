@@ -5,7 +5,7 @@ use troop_imports::*;
 
 #[no_mangle]
 pub unsafe extern "C" fn battle_action(me: EntityId) -> f32 {
-    retreat(me, 500.);
+    retreat(me, 64.);
     0.01
 }
 

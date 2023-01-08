@@ -15,7 +15,7 @@ use crate::{
     harvest::spawn_harvest_spot,
     helper::HelperTextBundle,
     loading::*,
-    GameState,
+    GameState, SafeInsert,
 };
 
 pub struct BattlePlugin;
@@ -89,29 +89,31 @@ fn spawn_player_staging_spot(
     textures: Res<TextureAssets>,
     scripts: Res<DeliveryScripts>,
 ) {
-    let helper = commands
-        .spawn(HelperTextBundle::new(
-            "Staging Point - Drag trained troops to send them to fight!",
-            fonts.fira_sans.clone(),
-        ))
-        .id();
-    commands
-        .spawn(StagingBundle {
-            sprite: SpriteSheetBundle {
-                texture_atlas: textures.locations.clone(),
-                sprite: TextureAtlasSprite {
-                    index: 4,
+    for (x, y) in [(256., 0.), (-256.0, 0.), (0., 128.), (0., -128.)].iter() {
+        let helper = commands
+            .spawn(HelperTextBundle::new(
+                "Staging Point - Drag trained troops to send them to fight!",
+                fonts.fira_sans.clone(),
+            ))
+            .id();
+        commands
+            .spawn(StagingBundle {
+                sprite: SpriteSheetBundle {
+                    texture_atlas: textures.locations.clone(),
+                    sprite: TextureAtlasSprite {
+                        index: 4,
+                        ..Default::default()
+                    },
+                    transform: Transform::from_translation(Vec3::new(*x, *y, 1.)),
                     ..Default::default()
                 },
-                transform: Transform::from_translation(Vec3::new(256., 0., 1.)),
-                ..Default::default()
-            },
-            faction: Faction::player(),
-            staging_location: Default::default(),
-            delivery_anchor: DeliveryAnchor::new(0., -16., 32., 32 * 32),
-            delivery_dropoff: DeliveryDropoff::new(scripts.staging.clone()),
-        })
-        .add_child(helper);
+                faction: Faction::player(),
+                staging_location: Default::default(),
+                delivery_anchor: DeliveryAnchor::new(0., -16., 32., 32 * 32),
+                delivery_dropoff: DeliveryDropoff::new(scripts.staging.clone()),
+            })
+            .add_child(helper);
+    }
 }
 
 fn spawn_king(
@@ -131,6 +133,14 @@ fn spawn_king(
         Faction::player(),
         HashMap::default(),
     );
+    commands.spawn(SpriteSheetBundle {
+        texture_atlas: textures.locations.clone(),
+        sprite: TextureAtlasSprite {
+            index: 6,
+            ..Default::default()
+        },
+        ..Default::default()
+    });
 }
 
 #[derive(Clone, Deserialize, TypeUuid)]
@@ -328,7 +338,9 @@ fn troop_cooldown_system(
     for (entity, mut troop) in troops_with_cooldowns.iter_mut() {
         troop.0 -= time.delta_seconds();
         if troop.0 < 0. {
-            commands.entity(entity).remove::<TroopCooldown>();
+            if let Some(mut entity) = commands.get_entity(entity) {
+                entity.remove::<TroopCooldown>();
+            }
         }
     }
 }
@@ -387,11 +399,7 @@ fn troop_battle_action_system(
         ) {
             Ok(cooldown) => {
                 if cooldown > 0. {
-                    commands.add(move |world: &mut World| {
-                        if let Some(mut entity) = world.get_entity_mut(entity) {
-                            entity.insert(TroopCooldown(cooldown));
-                        }
-                    });
+                    commands.add(SafeInsert::new(entity, TroopCooldown(cooldown)));
                 }
             }
             Err(err) => {
@@ -415,7 +423,9 @@ fn troop_death_system(
             ) {
                 Ok(dies) => {
                     if dies == 1 {
-                        commands.entity(entity).despawn_recursive();
+                        if let Some(mut entity) = commands.get_entity(entity) {
+                            entity.despawn_recursive();
+                        }
                     }
                 }
                 Err(err) => {

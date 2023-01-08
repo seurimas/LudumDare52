@@ -92,10 +92,12 @@ pub struct HarvestableAssets {
     #[asset(
         paths(
             "harvestables/archer.harvest",
-            "harvestables/grapes.harvest",
             "harvestables/recruit.harvest",
-            "harvestables/red_berry.harvest",
             "harvestables/soldier.harvest",
+            "harvestables/grapes.harvest",
+            "harvestables/red_berry.harvest",
+            "harvestables/pear.harvest",
+            "harvestables/lemon.harvest",
         ),
         collection(typed)
     )]

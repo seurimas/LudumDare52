@@ -25,7 +25,7 @@ pub fn heal_troop(env: FunctionEnvMut<WorldPointer>, entity_id: EntityId, amount
     env.data()
         .write()
         .get_mut::<Troop>(entity_id.to_entity())
-        .map(|mut troop| troop.health += 1);
+        .map(|mut troop| troop.health = (troop.health + amount).clamp(0, troop.troop_type.health));
 }
 
 pub fn set_script_value(

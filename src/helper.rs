@@ -45,7 +45,7 @@ impl HelperTextBundle {
                     TextStyle {
                         font,
                         font_size: 14.,
-                        color: Color::YELLOW_GREEN,
+                        color: Color::MIDNIGHT_BLUE,
                     },
                 ),
                 text_2d_bounds: Text2dBounds {

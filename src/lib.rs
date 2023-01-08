@@ -1,4 +1,3 @@
-mod actions;
 mod attacks;
 mod audio;
 mod battle;
@@ -14,17 +13,16 @@ mod menu;
 mod recruiting;
 mod wave;
 
-use crate::actions::ActionsPlugin;
 use crate::audio::InternalAudioPlugin;
 use crate::harvest::HarvestPlugin;
 use crate::loading::LoadingPlugin;
 use crate::menu::MenuPlugin;
 
 use battle::BattlePlugin;
-use bevy::app::App;
 #[cfg(debug_assertions)]
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
+use bevy::{app::App, ecs::system::Command};
 use delivery::DeliveryPlugin;
 use helper::{helper_text_system, HelperPlugin};
 use market::MarketPlugin;
@@ -51,7 +49,6 @@ impl Plugin for GamePlugin {
         app.add_state(GameState::Loading)
             .add_plugin(LoadingPlugin)
             .add_plugin(MenuPlugin)
-            .add_plugin(ActionsPlugin)
             .add_plugin(InternalAudioPlugin)
             .add_plugin(BattlePlugin)
             .add_plugin(DeliveryPlugin)
@@ -59,12 +56,42 @@ impl Plugin for GamePlugin {
             .add_plugin(HarvestPlugin)
             .add_plugin(RecruitingPlugin)
             .add_plugin(WavePlugin)
-            .add_plugin(HelperPlugin);
+            .add_plugin(HelperPlugin)
+            .add_system_set(SystemSet::on_exit(GameState::Playing).with_system(
+                |mut command: Commands, entities: Query<Entity>| {
+                    for entity in entities.iter() {
+                        command.entity(entity).despawn();
+                    }
+                },
+            ));
 
         #[cfg(debug_assertions)]
         {
             app.add_plugin(FrameTimeDiagnosticsPlugin::default())
                 .add_plugin(LogDiagnosticsPlugin::default());
+        }
+    }
+}
+pub struct SafeInsert<T> {
+    pub entity: Entity,
+    pub bundle: T,
+}
+
+impl<T: Bundle> SafeInsert<T> {
+    pub fn new(entity: Entity, bundle: T) -> Self {
+        Self { entity, bundle }
+    }
+}
+
+impl<T> Command for SafeInsert<T>
+where
+    T: Bundle + 'static,
+{
+    fn write(self, world: &mut World) {
+        if let Some(mut entity) = world.get_entity_mut(self.entity) {
+            entity.insert(self.bundle);
+        } else {
+            // panic!("error[B0003]: Could not insert a bundle (of type `{}`) for entity {:?} because it doesn't exist in this World.", std::any::type_name::<T>(), self.entity);
         }
     }
 }

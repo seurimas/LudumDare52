@@ -186,11 +186,11 @@ fn spawn_harvest_spots(
     textures: Res<TextureAssets>,
     scripts: Res<DeliveryScripts>,
 ) {
-    for x in 0..3 {
-        for y in 0..2 {
+    for x in 0..2 {
+        for y in 0..3 {
             spawn_harvest_spot(
                 &mut commands,
-                Vec2::new(x as f32 * 32., y as f32 * 32.),
+                Vec2::new(48. + x as f32 * 32., 32. - y as f32 * 32.),
                 fonts.fira_sans.clone(),
                 textures.harvest_base.clone(),
                 scripts.field_spot.clone(),

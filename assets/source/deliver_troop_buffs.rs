@@ -22,7 +22,7 @@ pub unsafe extern "C" fn receive(me: EntityId, delivery: EntityId, from: EntityI
     match get_harvestable_id(delivery) {
         0 => {
             // Red berries increase health.
-            heal_troop(me, 1);
+            heal_troop(me, (get_random() * 3.) as i32 + 2);
         }
         1 => {
             // Grapes increase speed
@@ -44,7 +44,7 @@ pub unsafe extern "C" fn receive(me: EntityId, delivery: EntityId, from: EntityI
             // X increase dodge rate
             set_script_value(
                 me,
-                ATTACK_SPEED_MOD_ID,
+                DODGE_CHANCE_ID,
                 1. - (1. - get_script_value(me, DODGE_CHANCE_ID, 0.) * 0.9),
             );
         }

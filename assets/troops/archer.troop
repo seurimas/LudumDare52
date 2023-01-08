@@ -3,7 +3,7 @@ TroopType(
     id: 1,
     name: "Archer",
     sprite_index: 1,
-    health: 3,
+    health: 6,
     size: 16.,
     script_path: "scripts/troop_archer.wasm",
 )

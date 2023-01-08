@@ -105,6 +105,7 @@ pub fn get_nearest_enemy(env: FunctionEnvMut<WorldPointer>, me: EntityId) -> Ent
         return EntityId::missing();
     }
     let my_transform = my_transform.unwrap();
+    let my_location = Vec2::new(my_transform.translation().x, my_transform.translation().y);
     env.data()
         .read()
         .get::<Troop>(me.to_entity())
@@ -115,11 +116,16 @@ pub fn get_nearest_enemy(env: FunctionEnvMut<WorldPointer>, me: EntityId) -> Ent
                     return i32::MAX;
                 }
                 let other_transform = other_transform.unwrap();
-                return my_transform
-                    .translation()
-                    .distance_squared(other_transform.translation()) as i32;
+                let other_location = Vec2::new(
+                    other_transform.translation().x,
+                    other_transform.translation().y,
+                );
+                let distance = my_location.distance_squared(other_location) as i32;
+                println!("{:?}: {}", me.to_entity(), distance);
+                distance
             })
         })
+        .filter(|entity| env.data().read().get_entity(**entity).is_some())
         .map(|entity| EntityId::from_entity(*entity))
         .unwrap_or(EntityId::missing())
 }
@@ -128,15 +134,21 @@ pub fn get_x_of(env: FunctionEnvMut<WorldPointer>, me: EntityId) -> f32 {
     env.data()
         .read()
         .get::<Transform>(me.to_entity())
-        .map(|transform| transform.translation.y)
-        .unwrap_or(0.)
+        .map(|transform| transform.translation.x)
+        .unwrap_or_else(|| {
+            warn!("Could not find transform for {:?}.", me.to_entity());
+            0.
+        })
 }
 pub fn get_y_of(env: FunctionEnvMut<WorldPointer>, me: EntityId) -> f32 {
     env.data()
         .read()
         .get::<Transform>(me.to_entity())
         .map(|transform| transform.translation.y)
-        .unwrap_or(0.)
+        .unwrap_or_else(|| {
+            warn!("Could not find transform for {:?}.", me.to_entity());
+            0.
+        })
 }
 pub fn get_distance(env: FunctionEnvMut<WorldPointer>, me: EntityId, other: EntityId) -> f32 {
     if let (Some(transform_a), Some(transform_b)) = (
