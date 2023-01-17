@@ -113,7 +113,7 @@ fn get_harvestable_value(env: FunctionEnvMut<WorldPointer>, entity_id: EntityId)
         .unwrap_or(-1)
 }
 
-fn get_harvestable_is_real(env: FunctionEnvMut<WorldPointer>, entity_id: EntityId) -> i32 {
+fn get_harvestable_is_real(env: FunctionEnvMut<WorldPointer>, entity_id: EntityId) -> i8 {
     env.data()
         .read()
         .get::<Harvestable>(entity_id.to_entity())
@@ -121,7 +121,7 @@ fn get_harvestable_is_real(env: FunctionEnvMut<WorldPointer>, entity_id: EntityI
         .unwrap_or(0)
 }
 
-fn get_harvestable_is_plant(env: FunctionEnvMut<WorldPointer>, entity_id: EntityId) -> i32 {
+fn get_harvestable_is_plant(env: FunctionEnvMut<WorldPointer>, entity_id: EntityId) -> i8 {
     env.data()
         .read()
         .get::<Harvestable>(entity_id.to_entity())

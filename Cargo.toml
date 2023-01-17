@@ -20,13 +20,15 @@ codegen-units = 1
 dev = [
     "bevy/dynamic",
 ]
+js = ["bevy_wasm_scripting/js", "wasmer/js-default"]
+non-js = ["bevy_wasm_scripting/non-js", "wasmer/sys-default"]
 
 [dependencies]
 bevy = { version = "0.9", default-features = false, features = ["bevy_asset", "bevy_winit", "render", "png", "x11"] }
 bevy_kira_audio = { version = "0.13", features = ["mp3"]}
 bevy_asset_loader = { version = "0.14", features = ["2d"] }
 rand = { version = "0.8.3" }
-bevy_wasm_scripting = { path = "../bevy_wasmer_scripting" }
+bevy_wasm_scripting = { path = "../bevy_wasmer_scripting", default-features = false }
 wasmer = { version = "3", features = ["wat", "std"], default-features = false }
 anyhow = "1.0"
 serde = { version = "1", features = ["derive"] }

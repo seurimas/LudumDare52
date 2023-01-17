@@ -78,7 +78,6 @@ impl StagingLocation {
         self.staged.push((new_troop, HashMap::new()));
     }
     pub fn stage_with_buffs(&mut self, new_troop: i32, buffs: HashMap<i32, f32>) {
-        println!("Staging!");
         self.staged.push((new_troop, buffs));
     }
 }

@@ -89,7 +89,6 @@ pub fn spawn_harvestable_by_id<S: 'static + Send + Sync>(
     let sprite_assets = world.get_resource::<TextureAssets>().unwrap();
     let harvestables = world.get_resource::<HarvestableTypes>().unwrap();
     if let Some(harvestable) = harvestables.get(id) {
-        println!("Spawning {}", harvestable.id);
         EntityId::from_entity({
             env.data()
                 .commands::<S>()
@@ -114,7 +113,6 @@ pub fn spawn_harvestable_by_id<S: 'static + Send + Sync>(
                 .id()
         })
     } else {
-        println!("No harvestable {}", id);
         EntityId::missing()
     }
 }

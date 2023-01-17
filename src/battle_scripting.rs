@@ -121,7 +121,6 @@ pub fn get_nearest_enemy(env: FunctionEnvMut<WorldPointer>, me: EntityId) -> Ent
                     other_transform.translation().y,
                 );
                 let distance = my_location.distance_squared(other_location) as i32;
-                println!("{:?}: {}", me.to_entity(), distance);
                 distance
             })
         })

@@ -96,7 +96,6 @@ pub fn spawn_attack<'a, 'b, 'c>(
     texture_atlas: Handle<TextureAtlas>,
     attack_type: AttackType,
 ) {
-    println!("Spawning attack...");
     commands.spawn(AttackBundle {
         sprite: SpriteSheetBundle {
             texture_atlas,
